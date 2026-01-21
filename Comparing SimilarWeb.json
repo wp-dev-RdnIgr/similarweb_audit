@@ -1651,33 +1651,26 @@
     },
     {
       "parameters": {
-        "resource": "spreadsheet",
-        "operation": "create",
-        "title": "=SimilarWeb Data - {{ $('Анализ результата поиска').first().json.client_site }}",
-        "sheetsUi": {
-          "sheetValues": [
-            {
-              "title": "Данные",
-              "values": "date,period,client_site,competitors_site,type,Total Visit,Direct,Organic Search,Paid Search,Display Ads,Social,Email,AI Traffic,Task ID,key"
-            }
-          ]
-        },
-        "options": {
-          "folderId": "={{ $json.id }}"
-        }
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"SimilarWeb Data - {{ $('Анализ результата поиска').first().json.client_site }}\",\n  \"mimeType\": \"application/vnd.google-apps.spreadsheet\",\n  \"parents\": [\"{{ $json.id }}\"]\n}"
       },
       "id": "ff666666-6666-6666-6666-666666666666",
       "name": "Создаём таблицу клиента",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1344,
         -352
       ],
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "hMp9ISVYVcdpImYl",
-          "name": "Google Sheets account"
+        "googleDriveOAuth2Api": {
+          "id": "LKAQlCpSzzSEwEwA",
+          "name": "Google Drive account"
         }
       }
     },
