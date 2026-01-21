@@ -1530,24 +1530,44 @@
     },
     {
       "parameters": {
-        "resource": "fileFolder",
-        "operation": "list",
-        "folderId": {
-          "__rl": true,
-          "value": "1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9",
-          "mode": "id"
-        },
-        "filter": {
-          "foldersOnly": true
+        "jsCode": "// Проверяем папку клиента через Google Drive API\n// Используем fetch с OAuth токеном\nconst clientSite = $('Извлекаем уникальных клиентов').first().json.client_site;\nconst parentFolderId = '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9';\n\n// Возвращаем данные для следующего узла\n// Проверка будет выполнена в HTTP Request\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_name: clientSite,\n    parent_folder_id: parentFolderId,\n    query: `mimeType='application/vnd.google-apps.folder' and name='${clientSite}' and '${parentFolderId}' in parents and trashed=false`\n  }\n}];"
+      },
+      "id": "bb222222-2222-2222-2222-222222222222",
+      "name": "Подготовка запроса Drive",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            }
+          ]
         },
         "options": {}
       },
-      "id": "bb222222-2222-2222-2222-222222222222",
-      "name": "Список папок клиентов",
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
+      "id": "bb222222-2222-2222-2222-222222222223",
+      "name": "Поиск папки клиента",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        464,
+        688,
         -272
       ],
       "credentials": {
@@ -1559,7 +1579,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Проверяем, есть ли папка клиента в списке\nconst allFolders = $input.all();\nconst clientSite = $('Извлекаем уникальных клиентов').first().json.client_site;\n\n// Ищем папку с именем клиента\nconst existingFolder = allFolders.find(folder => folder.json.name === clientSite);\n\nconst folderExists = !!existingFolder;\nconst folderId = folderExists ? existingFolder.json.id : null;\n\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_exists: folderExists,\n    folder_id: folderId,\n    folder_name: clientSite\n  }\n}];"
+        "jsCode": "// Анализируем результат поиска папки\nconst input = $input.first();\nconst files = input.json.files || [];\nconst clientSite = $('Подготовка запроса Drive').first().json.client_site;\n\n// Если папка найдена\nconst folderExists = files.length > 0;\nconst folderId = folderExists ? files[0].id : null;\n\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_exists: folderExists,\n    folder_id: folderId,\n    folder_name: clientSite\n  }\n}];"
       },
       "id": "cc333333-3333-3333-3333-333333333333",
       "name": "Анализ результата поиска",
@@ -2035,14 +2055,25 @@
       "main": [
         [
           {
-            "node": "Список папок клиентов",
+            "node": "Подготовка запроса Drive",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Список папок клиентов": {
+    "Подготовка запроса Drive": {
+      "main": [
+        [
+          {
+            "node": "Поиск папки клиента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Поиск папки клиента": {
       "main": [
         [
           {
