@@ -122,7 +122,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Проверка полноты данных за последние 10 месяцев\nconst competitors = $('Читаем всех конкурентов').all();\nconst results = $('Читаем все результаты').all();\n\n// Генерируем список последних 10 месяцев\nfunction getLast10Months() {\n  const months = [];\n  const now = new Date();\n  \n  for (let i = 1; i <= 10; i++) {\n    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);\n    const year = d.getFullYear();\n    const month = String(d.getMonth() + 1).padStart(2, '0');\n    months.push(`${year}.${month}`);\n  }\n  \n  return months;\n}\n\nconst last10Months = getLast10Months();\n\n// Собираем все уникальные комбинации client_site + competitors_site\nconst allSitePairs = new Map();\n\ncompetitors.forEach(row => {\n  const client = row.json.client_site;\n  const competitor = row.json.competitors_site;\n  \n  if (client && competitor) {\n    // Добавляем клиента\n    if (!allSitePairs.has(client)) {\n      allSitePairs.set(client, { client: client, isClient: true });\n    }\n    // Добавляем конкурента\n    const key = `${client}|${competitor}`;\n    if (!allSitePairs.has(key)) {\n      allSitePairs.set(key, { client: client, site: competitor, isClient: false });\n    }\n  }\n});\n\n// Собираем существующие ключи из результатов\nconst existingKeys = new Set();\nresults.forEach(row => {\n  if (row.json.key) {\n    existingKeys.add(row.json.key);\n  }\n});\n\n// Находим недостающие данные\nconst missingData = [];\n\nallSitePairs.forEach((siteInfo, mapKey) => {\n  const site = siteInfo.isClient ? siteInfo.client : siteInfo.site;\n  const client = siteInfo.client;\n  \n  last10Months.forEach(period => {\n    const key = `${period}_${site}`;\n    \n    if (!existingKeys.has(key)) {\n      missingData.push({\n        client_site: client,\n        site: site,\n        period: period,\n        key: key,\n        priority: last10Months.indexOf(period) // Более старые = выше приоритет\n      });\n    }\n  });\n});\n\n// Сортируем по приоритету (сначала старые данные)\nmissingData.sort((a, b) => b.priority - a.priority);\n\n// Группируем по клиенту и периоду для оптимизации запросов\nconst grouped = {};\n\nmissingData.forEach(item => {\n  const groupKey = `${item.client_site}|${item.period}`;\n  \n  if (!grouped[groupKey]) {\n    grouped[groupKey] = {\n      client_site: item.client_site,\n      period: item.period,\n      sites: [item.client_site], // Клиент всегда первый\n      priority: item.priority\n    };\n  }\n  \n  if (!grouped[groupKey].sites.includes(item.site)) {\n    grouped[groupKey].sites.push(item.site);\n  }\n});\n\n// Преобразуем в массив задач для очереди\nconst queueTasks = Object.values(grouped).map(group => ({\n  queue_id: `${group.client_site}_${group.period}_${Date.now()}`,\n  client_site: group.client_site,\n  sites_list: group.sites.join(','),\n  period: group.period,\n  status: 'pending',\n  priority: group.priority,\n  created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),\n  task_id: '',\n  error_message: ''\n}));\n\n// Сортируем по приоритету\nqueueTasks.sort((a, b) => b.priority - a.priority);\n\nconst summary = {\n  totalMissing: missingData.length,\n  tasksToCreate: queueTasks.length,\n  periods: last10Months\n};\n\nconsole.log('Missing data summary:', summary);\n\nif (queueTasks.length === 0) {\n  return [{ json: { noNewTasks: true, summary } }];\n}\n\nreturn queueTasks.map(task => ({ json: task }));"
+        "jsCode": "// Проверка полноты данных за последние 10 месяцев\n// ОПТИМИЗАЦИЯ: Разбиваем конкурентов на группы по 4 сайта (ограничение SimilarWeb)\nconst competitors = $('Читаем всех конкурентов').all();\nconst results = $('Читаем все результаты').all();\n\n// Максимум сайтов в одном запросе SimilarWeb (клиент + конкуренты)\nconst MAX_SITES_PER_REQUEST = 4;\n\n// Генерируем список последних 10 месяцев\nfunction getLast10Months() {\n  const months = [];\n  const now = new Date();\n  \n  for (let i = 1; i <= 10; i++) {\n    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);\n    const year = d.getFullYear();\n    const month = String(d.getMonth() + 1).padStart(2, '0');\n    months.push(`${year}.${month}`);\n  }\n  \n  return months;\n}\n\nconst last10Months = getLast10Months();\n\n// Группируем конкурентов по клиентам\nconst clientCompetitors = new Map();\n\ncompetitors.forEach(row => {\n  const client = row.json.client_site;\n  const competitor = row.json.competitors_site;\n  \n  if (client && competitor) {\n    if (!clientCompetitors.has(client)) {\n      clientCompetitors.set(client, []);\n    }\n    if (!clientCompetitors.get(client).includes(competitor)) {\n      clientCompetitors.get(client).push(competitor);\n    }\n  }\n});\n\n// Собираем существующие ключи из результатов\nconst existingKeys = new Set();\nresults.forEach(row => {\n  if (row.json.key) {\n    existingKeys.add(row.json.key);\n  }\n});\n\n// Функция для разбиения массива на чанки\nfunction chunkArray(array, chunkSize) {\n  const chunks = [];\n  for (let i = 0; i < array.length; i += chunkSize) {\n    chunks.push(array.slice(i, i + chunkSize));\n  }\n  return chunks;\n}\n\n// Создаём задачи с разбиением на группы по 4\nconst queueTasks = [];\n\nclientCompetitors.forEach((competitorsList, clientSite) => {\n  // Разбиваем конкурентов на группы по 3 (клиент + 3 конкурента = 4 сайта)\n  const competitorChunks = chunkArray(competitorsList, MAX_SITES_PER_REQUEST - 1);\n  \n  competitorChunks.forEach((chunk, chunkIndex) => {\n    last10Months.forEach((period, periodIndex) => {\n      // Формируем список сайтов: клиент + до 3 конкурентов\n      const sitesInRequest = [clientSite, ...chunk];\n      \n      // Проверяем, есть ли недостающие данные для этой группы\n      const missingSites = sitesInRequest.filter(site => {\n        const key = `${period}_${site}`;\n        return !existingKeys.has(key);\n      });\n      \n      // Если есть хотя бы один сайт без данных - создаём задачу\n      if (missingSites.length > 0) {\n        const taskId = `${clientSite}_${period}_chunk${chunkIndex}_${Date.now()}`;\n        \n        queueTasks.push({\n          queue_id: taskId,\n          client_site: clientSite,\n          sites_list: sitesInRequest.join(','),\n          chunk_index: chunkIndex,\n          total_chunks: competitorChunks.length,\n          period: period,\n          status: 'pending',\n          priority: periodIndex, // Старые периоды = выше приоритет\n          created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),\n          task_id: '',\n          error_message: ''\n        });\n      }\n    });\n  });\n});\n\n// Сортируем по приоритету (сначала старые данные)\nqueueTasks.sort((a, b) => b.priority - a.priority);\n\nconst summary = {\n  totalClients: clientCompetitors.size,\n  totalTasks: queueTasks.length,\n  periods: last10Months,\n  maxSitesPerRequest: MAX_SITES_PER_REQUEST\n};\n\nconsole.log('Queue tasks summary:', summary);\n\nif (queueTasks.length === 0) {\n  return [{ json: { noNewTasks: true, summary } }];\n}\n\nreturn queueTasks.map(task => ({ json: task }));"
       },
       "id": "19b85d8a-b590-4d84-aaa8-cea697886401",
       "name": "Анализ полноты данных",
@@ -293,7 +293,7 @@
     {
       "parameters": {
         "chatId": "-1003503638426",
-        "text": "=📋 <b>Проверка полноты данных</b>\n\nДобавлено задач в очередь: {{ $json.length || 1 }}\n\nПериоды: последние 10 месяцев",
+        "text": "=📋 <b>Проверка полноты данных</b>\n\nДобавлено задач в очередь: {{ $json.length || 1 }}\n\nПериоды: последние 10 месяцев\n\n⚡ Оптимизация: макс. 4 сайта на запрос",
         "additionalFields": {
           "parse_mode": "HTML"
         }
@@ -395,7 +395,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Формируем URL для запуска робота\nconst input = $input.first().json;\n\nconst period = `${input.period}-${input.period}`;\nconst sites = input.sites_list.split(',');\nconst sitesParam = sites.map(s => s.trim()).join('%2C');\n\n// Добавляем queue_id в URL чтобы потом извлечь\nconst queueId = encodeURIComponent(input.queue_id);\n\nconst performanceUrl = `https://pro.similarweb.com/#/digitalsuite/websiteanalysis/overview/website-performance/*/804/${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\nconst aiTrafficUrl = `https://pro.similarweb.com/#/digitalsuite/ai-traffic/overview/*/804/${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\n\nreturn [{\n  json: {\n    ...input,\n    performanceUrl,\n    aiTrafficUrl,\n    sites,\n    sitesCount: sites.length\n  }\n}];"
+        "jsCode": "// Формируем URL для запуска робота\n// ВАЖНО: sites_list уже содержит максимум 4 сайта (ограничение SimilarWeb)\nconst input = $input.first().json;\n\nconst period = `${input.period}-${input.period}`;\nconst sites = input.sites_list.split(',');\n\n// Проверка на лимит 4 сайта (должно быть уже соблюдено, но на всякий случай)\nif (sites.length > 4) {\n  console.warn(`WARNING: Too many sites (${sites.length}), truncating to 4`);\n  sites.length = 4;\n}\n\nconst sitesParam = sites.map(s => s.trim()).join('%2C');\n\n// Добавляем queue_id в URL чтобы потом извлечь\nconst queueId = encodeURIComponent(input.queue_id);\n\nconst performanceUrl = `https://pro.similarweb.com/#/digitalsuite/websiteanalysis/overview/website-performance/*/804/${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\nconst aiTrafficUrl = `https://pro.similarweb.com/#/digitalsuite/ai-traffic/overview/*/804/${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\n\nreturn [{\n  json: {\n    ...input,\n    performanceUrl,\n    aiTrafficUrl,\n    sites,\n    sitesCount: sites.length\n  }\n}];"
       },
       "id": "d4b2714a-4e2a-4eae-99f2-b22ff0ae5bcc",
       "name": "Подготовка URL",
@@ -1514,6 +1514,168 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ЗАДАЧА №1: Проверка и создание папок клиентов на Google Drive\n// Извлекаем уникальных клиентов из списка конкурентов\nconst competitors = $('Читаем всех конкурентов').all();\n\n// Собираем уникальных клиентов\nconst uniqueClients = new Set();\ncompetitors.forEach(row => {\n  const client = row.json.client_site;\n  if (client) {\n    uniqueClients.add(client);\n  }\n});\n\n// Возвращаем список клиентов для проверки папок\nconst clients = Array.from(uniqueClients).map(client => ({\n  json: {\n    client_site: client,\n    folder_name: client // Имя папки = имя сайта клиента\n  }\n}));\n\nconsole.log(`Found ${clients.length} unique clients`);\nreturn clients;"
+      },
+      "id": "aa111111-1111-1111-1111-111111111111",
+      "name": "Извлекаем уникальных клиентов",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "operation": "search",
+        "queryString": "=mimeType='application/vnd.google-apps.folder' and name='{{ $json.folder_name }}' and '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9' in parents and trashed=false",
+        "options": {
+          "fields": "id, name"
+        }
+      },
+      "id": "bb222222-2222-2222-2222-222222222222",
+      "name": "Проверяем папку клиента",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        464,
+        -272
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Проверяем результат поиска папки\nconst input = $input.first();\nconst searchResults = input.json;\nconst clientSite = $('Извлекаем уникальных клиентов').first().json.client_site;\n\n// Если папка найдена (есть результаты поиска)\nconst folderExists = searchResults && searchResults.id;\n\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_exists: folderExists,\n    folder_id: folderExists ? searchResults.id : null,\n    folder_name: clientSite\n  }\n}];"
+      },
+      "id": "cc333333-3333-3333-3333-333333333333",
+      "name": "Анализ результата поиска",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "folder-exists-check",
+              "leftValue": "={{ $json.folder_exists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dd444444-4444-4444-4444-444444444444",
+      "name": "Папка существует?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "operation": "create",
+        "name": "={{ $json.folder_name }}",
+        "options": {
+          "parentFolderId": "1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9"
+        }
+      },
+      "id": "ee555555-5555-5555-5555-555555555555",
+      "name": "Создаём папку клиента",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        -352
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "operation": "create",
+        "title": "=SimilarWeb Data - {{ $('Анализ результата поиска').first().json.client_site }}",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "Данные",
+              "values": "date,period,client_site,competitors_site,type,Total Visit,Direct,Organic Search,Paid Search,Display Ads,Social,Email,AI Traffic,Task ID,key"
+            }
+          ]
+        },
+        "options": {
+          "folderId": "={{ $json.id }}"
+        }
+      },
+      "id": "ff666666-6666-6666-6666-666666666666",
+      "name": "Создаём таблицу клиента",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1344,
+        -352
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "-1003503638426",
+        "text": "=📁 <b>Новый клиент</b>\n\n🌐 Сайт: {{ $('Анализ результата поиска').first().json.client_site }}\n✅ Создана папка на Google Drive\n📊 Создана таблица для данных",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "gg777777-7777-7777-7777-777777777777",
+      "name": "Telegram: Новый клиент",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        -352
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "mHbM43fsaWN90avF",
+          "name": "I.Redin - ws tg log"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -1539,6 +1701,11 @@
         [
           {
             "node": "Объединяем данные",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Извлекаем уникальных клиентов",
             "type": "main",
             "index": 0
           }
@@ -1602,7 +1769,13 @@
     },
     "Cron: Обработка очереди": {
       "main": [
-        []
+        [
+          {
+            "node": "Читаем очередь",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Читаем очередь": {
@@ -1847,6 +2020,73 @@
         [
           {
             "node": "Обновляем статус очереди: done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Извлекаем уникальных клиентов": {
+      "main": [
+        [
+          {
+            "node": "Проверяем папку клиента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверяем папку клиента": {
+      "main": [
+        [
+          {
+            "node": "Анализ результата поиска",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Анализ результата поиска": {
+      "main": [
+        [
+          {
+            "node": "Папка существует?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Папка существует?": {
+      "main": [
+        [
+          {
+            "node": "Создаём папку клиента",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Создаём папку клиента": {
+      "main": [
+        [
+          {
+            "node": "Создаём таблицу клиента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Создаём таблицу клиента": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Новый клиент",
             "type": "main",
             "index": 0
           }
