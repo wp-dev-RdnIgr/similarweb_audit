@@ -1531,12 +1531,19 @@
     {
       "parameters": {
         "resource": "fileFolder",
-        "operation": "search",
-        "queryString": "=mimeType='application/vnd.google-apps.folder' and name='{{ $json.folder_name }}' and '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9' in parents and trashed=false",
+        "operation": "list",
+        "folderId": {
+          "__rl": true,
+          "value": "1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9",
+          "mode": "id"
+        },
+        "filter": {
+          "foldersOnly": true
+        },
         "options": {}
       },
       "id": "bb222222-2222-2222-2222-222222222222",
-      "name": "Проверяем папку клиента",
+      "name": "Список папок клиентов",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
@@ -1552,7 +1559,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Проверяем результат поиска папки\nconst input = $input.first();\nconst searchResults = input.json;\nconst clientSite = $('Извлекаем уникальных клиентов').first().json.client_site;\n\n// Если папка найдена (есть результаты поиска)\nconst folderExists = searchResults && searchResults.id;\n\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_exists: folderExists,\n    folder_id: folderExists ? searchResults.id : null,\n    folder_name: clientSite\n  }\n}];"
+        "jsCode": "// Проверяем, есть ли папка клиента в списке\nconst allFolders = $input.all();\nconst clientSite = $('Извлекаем уникальных клиентов').first().json.client_site;\n\n// Ищем папку с именем клиента\nconst existingFolder = allFolders.find(folder => folder.json.name === clientSite);\n\nconst folderExists = !!existingFolder;\nconst folderId = folderExists ? existingFolder.json.id : null;\n\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_exists: folderExists,\n    folder_id: folderId,\n    folder_name: clientSite\n  }\n}];"
       },
       "id": "cc333333-3333-3333-3333-333333333333",
       "name": "Анализ результата поиска",
@@ -2028,14 +2035,14 @@
       "main": [
         [
           {
-            "node": "Проверяем папку клиента",
+            "node": "Список папок клиентов",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Проверяем папку клиента": {
+    "Список папок клиентов": {
       "main": [
         [
           {
