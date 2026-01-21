@@ -1924,15 +1924,16 @@
           "value": {
             "client_site": "={{ $('Анализ результата поиска').item.json.client_site }}",
             "folder_id": "={{ $('Создаём папку клиента').item.json.id }}",
-            "spreadsheet_id": "={{ $('Создаём таблицу клиента').item.json.id }}",
-            "created_at": "={{ new Date().toISOString().replace('T', ' ').substring(0, 19) }}"
+            "spreadsheet_id": "={{ $('Создаём таблицу клиента').item.json.id }}"
           },
           "matchingColumns": [],
           "schema": [
+            {"id": "client_id", "displayName": "client_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
             {"id": "client_site", "displayName": "client_site", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
+            {"id": "employee_email", "displayName": "employee_email", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
+            {"id": "client_status", "displayName": "client_status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
             {"id": "folder_id", "displayName": "folder_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
-            {"id": "spreadsheet_id", "displayName": "spreadsheet_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
-            {"id": "created_at", "displayName": "created_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true}
+            {"id": "spreadsheet_id", "displayName": "spreadsheet_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true}
           ]
         },
         "options": {}
