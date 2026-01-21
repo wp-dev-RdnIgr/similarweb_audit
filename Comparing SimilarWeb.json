@@ -1702,8 +1702,56 @@
     },
     {
       "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id",
+          "cachedResultName": "Клиенты"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "client_site": "={{ $('Анализ результата поиска').item.json.client_site }}",
+            "folder_id": "={{ $('Создаём папку клиента').item.json.id }}",
+            "spreadsheet_id": "={{ $('Создаём таблицу клиента').item.json.id }}",
+            "created_at": "={{ new Date().toISOString().replace('T', ' ').substring(0, 19) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {"id": "client_site", "displayName": "client_site", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
+            {"id": "folder_id", "displayName": "folder_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
+            {"id": "spreadsheet_id", "displayName": "spreadsheet_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
+            {"id": "created_at", "displayName": "created_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true}
+          ]
+        },
+        "options": {}
+      },
+      "id": "ii999999-9999-9999-9999-999999999999",
+      "name": "Сохраняем клиента",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1568,
+        -272
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
         "chatId": "-1003503638426",
-        "text": "=📁 <b>Новый клиент</b>\n\n🌐 Сайт: {{ $('Анализ результата поиска').item.json.client_site }}\n✅ Создана папка на Google Drive\n📊 Создана таблица для данных",
+        "text": "=📁 <b>Новый клиент</b>\n\n🌐 Сайт: {{ $('Анализ результата поиска').item.json.client_site }}\n✅ Создана папка на Google Drive\n📊 Создана таблица: {{ $('Создаём таблицу клиента').item.json.id }}",
         "additionalFields": {
           "parse_mode": "HTML"
         }
@@ -1713,7 +1761,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1568,
+        1680,
         -352
       ],
       "credentials": {
@@ -2151,6 +2199,17 @@
       ]
     },
     "Создаём лист Данные": {
+      "main": [
+        [
+          {
+            "node": "Сохраняем клиента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Сохраняем клиента": {
       "main": [
         [
           {
