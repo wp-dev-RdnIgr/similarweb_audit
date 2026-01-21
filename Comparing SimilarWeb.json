@@ -1734,7 +1734,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Проверяем папку клиента через Google Drive API\n// Обрабатываем текущий элемент из списка клиентов\nconst clientSite = $input.item.json.client_site;\nconst parentFolderId = '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9';\n\n// Возвращаем данные для следующего узла\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_name: clientSite,\n    parent_folder_id: parentFolderId,\n    query: `mimeType='application/vnd.google-apps.folder' and name='${clientSite}' and '${parentFolderId}' in parents and trashed=false`\n  }\n}];"
+        "jsCode": "// Проверяем папку клиента через Google Drive API\n// Обрабатываем текущий элемент из списка клиентов\nconst clientSite = $input.item.json.client_site;\nconst parentFolderId = '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9';\n\n// Передаём данные для HTTP Request и сохраняем client_site в output\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_name: clientSite,\n    parent_folder_id: parentFolderId,\n    query: `mimeType='application/vnd.google-apps.folder' and name='${clientSite}' and '${parentFolderId}' in parents and trashed=false`\n  }\n}];"
       },
       "id": "bb222222-2222-2222-2222-222222222222",
       "name": "Подготовка запроса Drive",
@@ -1783,7 +1783,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Анализируем результат поиска папки\nconst input = $input.item;\nconst files = input.json.files || [];\nconst clientSite = $('Подготовка запроса Drive').item.json.client_site;\n\n// Если папка найдена\nconst folderExists = files.length > 0;\nconst folderId = folderExists ? files[0].id : null;\n\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_exists: folderExists,\n    folder_id: folderId,\n    folder_name: clientSite\n  }\n}];"
+        "jsCode": "// Анализируем результат поиска папки для ВСЕХ клиентов\nconst httpResults = $input.all();\nconst originalItems = $('Подготовка запроса Drive').all();\n\nconst results = [];\n\nfor (let i = 0; i < httpResults.length; i++) {\n  const files = httpResults[i].json.files || [];\n  const clientSite = originalItems[i].json.client_site;\n  \n  const folderExists = files.length > 0;\n  const folderId = folderExists ? files[0].id : null;\n  \n  results.push({\n    json: {\n      client_site: clientSite,\n      folder_exists: folderExists,\n      folder_id: folderId,\n      folder_name: clientSite\n    }\n  });\n}\n\nreturn results;"
       },
       "id": "cc333333-3333-3333-3333-333333333333",
       "name": "Анализ результата поиска",
@@ -1861,7 +1861,7 @@
         "nodeCredentialType": "googleDriveOAuth2Api",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"name\": \"SimilarWeb Data - {{ $('Анализ результата поиска').item.json.client_site }}\",\n  \"mimeType\": \"application/vnd.google-apps.spreadsheet\",\n  \"parents\": [\"{{ $json.id }}\"]\n}"
+        "jsonBody": "={\n  \"name\": \"SimilarWeb Data - {{ $('Папка существует?').item.json.client_site }}\",\n  \"mimeType\": \"application/vnd.google-apps.spreadsheet\",\n  \"parents\": [\"{{ $json.id }}\"]\n}"
       },
       "id": "ff666666-6666-6666-6666-666666666666",
       "name": "Создаём таблицу клиента",
@@ -1922,7 +1922,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "client_site": "={{ $('Анализ результата поиска').item.json.client_site }}",
+            "client_site": "={{ $('Папка существует?').item.json.client_site }}",
             "folder_id": "={{ $('Создаём папку клиента').item.json.id }}",
             "spreadsheet_id": "={{ $('Создаём таблицу клиента').item.json.id }}"
           },
@@ -1956,7 +1956,7 @@
     {
       "parameters": {
         "chatId": "-1003503638426",
-        "text": "=📁 <b>Новый клиент</b>\n\n🌐 Сайт: {{ $('Анализ результата поиска').item.json.client_site }}\n✅ Создана папка на Google Drive\n📊 Создана таблица: {{ $('Создаём таблицу клиента').item.json.id }}",
+        "text": "=📁 <b>Новый клиент</b>\n\n🌐 Сайт: {{ $('Папка существует?').item.json.client_site }}\n✅ Создана папка на Google Drive\n📊 Создана таблица: {{ $('Создаём таблицу клиента').item.json.id }}",
         "additionalFields": {
           "parse_mode": "HTML"
         }
