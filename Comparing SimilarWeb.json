@@ -1071,6 +1071,108 @@
     },
     {
       "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id",
+          "cachedResultName": "Клиенты"
+        },
+        "options": {}
+      },
+      "id": "jj000000-0000-0000-0000-000000000001",
+      "name": "Читаем Клиенты",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        1320
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Маршрутизация данных в таблицу клиента\nconst clients = $('Читаем Клиенты').all();\nconst performanceRows = $('Split Out: Performance').all();\n\n// Создаём мапу client_site -> spreadsheet_id\nconst clientMap = new Map();\nclients.forEach(c => {\n  if (c.json.client_site && c.json.spreadsheet_id) {\n    clientMap.set(c.json.client_site, c.json.spreadsheet_id);\n  }\n});\n\n// Группируем данные по клиентам\nconst resultsByClient = new Map();\n\nperformanceRows.forEach(row => {\n  const clientSite = row.json.client_site;\n  const spreadsheetId = clientMap.get(clientSite);\n  \n  if (spreadsheetId) {\n    if (!resultsByClient.has(clientSite)) {\n      resultsByClient.set(clientSite, {\n        spreadsheet_id: spreadsheetId,\n        rows: []\n      });\n    }\n    resultsByClient.get(clientSite).rows.push(row.json);\n  }\n});\n\n// Возвращаем данные для записи в таблицы клиентов\nconst output = [];\nresultsByClient.forEach((data, clientSite) => {\n  data.rows.forEach(row => {\n    output.push({\n      json: {\n        ...row,\n        _spreadsheet_id: data.spreadsheet_id\n      }\n    });\n  });\n});\n\nreturn output.length > 0 ? output : [{ json: { noClientData: true } }];"
+      },
+      "id": "jj000000-0000-0000-0000-000000000002",
+      "name": "Маршрутизация по клиентам",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-client-data",
+              "leftValue": "={{ $json.noClientData }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "jj000000-0000-0000-0000-000000000003",
+      "name": "Есть данные клиента?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json._spreadsheet_id }}/values/Данные:append?valueInputOption=USER_ENTERED",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [[\n    \"{{ $json.date }}\",\n    \"{{ $json.period }}\",\n    \"{{ $json.client_site }}\",\n    \"{{ $json.competitors_site }}\",\n    \"{{ $json.type }}\",\n    \"{{ $json['Total Visit'] }}\",\n    \"{{ $json.Direct }}\",\n    \"{{ $json['Organic Search'] }}\",\n    \"{{ $json['Paid Search'] }}\",\n    \"{{ $json['Display Ads'] }}\",\n    \"{{ $json.Social }}\",\n    \"{{ $json.Email }}\",\n    \"{{ $json['AI Traffic'] }}\",\n    \"{{ $json['Task ID'] }}\",\n    \"{{ $json.key }}\"\n  ]]\n}"
+      },
+      "id": "jj000000-0000-0000-0000-000000000004",
+      "name": "Пишем в таблицу клиента",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1792,
+        1320
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
         "jsCode": "// Обновляем статус в очереди после успешного сохранения\nconst performanceData = $('Parse Performance Data').first().json;\nconst originUrl = $('Проверка статуса задачи').first().json.originUrl || '';\n\n// Извлекаем queue_id из URL\nconst qidMatch = originUrl.match(/qid=([^&]+)/);\nconst queueId = qidMatch ? decodeURIComponent(qidMatch[1]) : '';\n\nconst now = new Date().toISOString().replace('T', ' ').substring(0, 19);\n\nreturn [{\n  json: {\n    queue_id: queueId,\n    status: 'done',\n    task_id: performanceData.taskId\n  }\n}];"
       },
       "id": "c792cf9c-2878-4b26-8ccb-5ebf399da95a",
@@ -1332,6 +1434,108 @@
     },
     {
       "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id",
+          "cachedResultName": "Клиенты"
+        },
+        "options": {}
+      },
+      "id": "kk000000-0000-0000-0000-000000000005",
+      "name": "Читаем Клиенты для AI",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        912,
+        1328
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Маршрутизация AI Traffic данных в таблицу клиента\nconst clients = $('Читаем Клиенты для AI').all();\nconst aiRows = $('Split Out: AI Traffic').all();\n\n// Создаём мапу client_site -> spreadsheet_id\nconst clientMap = new Map();\nclients.forEach(c => {\n  if (c.json.client_site && c.json.spreadsheet_id) {\n    clientMap.set(c.json.client_site, c.json.spreadsheet_id);\n  }\n});\n\n// Группируем данные по клиентам\nconst output = [];\n\naiRows.forEach(row => {\n  const clientSite = row.json.client_site;\n  const spreadsheetId = clientMap.get(clientSite);\n  \n  if (spreadsheetId) {\n    output.push({\n      json: {\n        ...row.json,\n        _spreadsheet_id: spreadsheetId\n      }\n    });\n  }\n});\n\nreturn output.length > 0 ? output : [{ json: { noClientData: true } }];"
+      },
+      "id": "kk000000-0000-0000-0000-000000000006",
+      "name": "Маршрутизация AI по клиентам",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-ai-client-data",
+              "leftValue": "={{ $json.noClientData }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "kk000000-0000-0000-0000-000000000007",
+      "name": "Есть AI данные клиента?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json._spreadsheet_id }}/values/Данные:append?valueInputOption=USER_ENTERED",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [[\n    \"{{ $json.date }}\",\n    \"{{ $json.period }}\",\n    \"{{ $json.client_site }}\",\n    \"{{ $json.competitors_site }}\",\n    \"{{ $json.type }}\",\n    \"{{ $json['Total Visit'] || '' }}\",\n    \"{{ $json.Direct || '' }}\",\n    \"{{ $json['Organic Search'] || '' }}\",\n    \"{{ $json['Paid Search'] || '' }}\",\n    \"{{ $json['Display Ads'] || '' }}\",\n    \"{{ $json.Social || '' }}\",\n    \"{{ $json.Email || '' }}\",\n    \"{{ $json['AI Traffic'] }}\",\n    \"{{ $json['Task ID'] }}\",\n    \"{{ $json.key }}\"\n  ]]\n}"
+      },
+      "id": "kk000000-0000-0000-0000-000000000008",
+      "name": "Пишем AI в таблицу клиента",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1584,
+        1328
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
         "jsCode": "// Формируем отчёт из AI Traffic данных\nconst data = $('Parse AI Traffic Data').first().json;\n\nlet report = '🤖 <b>AI TRAFFIC</b>\\n';\nreport += `📅 ${data.periodFormatted}\\n`;\nreport += '━━━━━━━━━━━━━━━━━━━━━\\n\\n';\n\nconst aiTraffic = data.aiTraffic || {};\n\nif (Object.keys(aiTraffic).length > 0) {\n  Object.entries(aiTraffic).forEach(([site, value], idx) => {\n    const emoji = idx === 0 ? '🔵' : idx === 1 ? '🟠' : idx === 2 ? '🟢' : '🟡';\n    report += `${emoji} ${site}: <b>${value}</b>\\n`;\n  });\n} else {\n  report += 'Нет данных по AI Traffic\\n';\n}\n\nreport += '\\n━━━━━━━━━━━━━━━━━━━━━\\n';\nreport += '✅ AI Traffic сохранён';\n\nreturn [{\n  json: {\n    report,\n    ...data\n  }\n}];"
       },
       "id": "bf059aa6-9054-4c56-8bc8-b383c8ca02e6",
@@ -1530,7 +1734,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Проверяем папку клиента через Google Drive API\n// Используем fetch с OAuth токеном\nconst clientSite = $('Извлекаем уникальных клиентов').first().json.client_site;\nconst parentFolderId = '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9';\n\n// Возвращаем данные для следующего узла\n// Проверка будет выполнена в HTTP Request\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_name: clientSite,\n    parent_folder_id: parentFolderId,\n    query: `mimeType='application/vnd.google-apps.folder' and name='${clientSite}' and '${parentFolderId}' in parents and trashed=false`\n  }\n}];"
+        "jsCode": "// Проверяем папку клиента через Google Drive API\n// Обрабатываем текущий элемент из списка клиентов\nconst clientSite = $input.item.json.client_site;\nconst parentFolderId = '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9';\n\n// Возвращаем данные для следующего узла\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_name: clientSite,\n    parent_folder_id: parentFolderId,\n    query: `mimeType='application/vnd.google-apps.folder' and name='${clientSite}' and '${parentFolderId}' in parents and trashed=false`\n  }\n}];"
       },
       "id": "bb222222-2222-2222-2222-222222222222",
       "name": "Подготовка запроса Drive",
@@ -1579,7 +1783,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Анализируем результат поиска папки\nconst input = $input.first();\nconst files = input.json.files || [];\nconst clientSite = $('Подготовка запроса Drive').first().json.client_site;\n\n// Если папка найдена\nconst folderExists = files.length > 0;\nconst folderId = folderExists ? files[0].id : null;\n\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_exists: folderExists,\n    folder_id: folderId,\n    folder_name: clientSite\n  }\n}];"
+        "jsCode": "// Анализируем результат поиска папки\nconst input = $input.item;\nconst files = input.json.files || [];\nconst clientSite = $('Подготовка запроса Drive').item.json.client_site;\n\n// Если папка найдена\nconst folderExists = files.length > 0;\nconst folderId = folderExists ? files[0].id : null;\n\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_exists: folderExists,\n    folder_id: folderId,\n    folder_name: clientSite\n  }\n}];"
       },
       "id": "cc333333-3333-3333-3333-333333333333",
       "name": "Анализ результата поиска",
@@ -1651,27 +1855,46 @@
     },
     {
       "parameters": {
-        "resource": "spreadsheet",
-        "operation": "create",
-        "title": "=SimilarWeb Data - {{ $('Анализ результата поиска').first().json.client_site }}",
-        "sheetsUi": {
-          "sheetValues": [
-            {
-              "title": "Данные",
-              "values": "date,period,client_site,competitors_site,type,Total Visit,Direct,Organic Search,Paid Search,Display Ads,Social,Email,AI Traffic,Task ID,key"
-            }
-          ]
-        },
-        "options": {
-          "folderId": "={{ $json.id }}"
-        }
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"SimilarWeb Data - {{ $('Анализ результата поиска').item.json.client_site }}\",\n  \"mimeType\": \"application/vnd.google-apps.spreadsheet\",\n  \"parents\": [\"{{ $json.id }}\"]\n}"
       },
       "id": "ff666666-6666-6666-6666-666666666666",
       "name": "Создаём таблицу клиента",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        -352
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "LKAQlCpSzzSEwEwA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "title": "Данные"
+      },
+      "id": "hh888888-8888-8888-8888-888888888888",
+      "name": "Создаём лист Данные",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1344,
+        1456,
         -352
       ],
       "credentials": {
@@ -1683,8 +1906,56 @@
     },
     {
       "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id",
+          "cachedResultName": "Клиенты"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "client_site": "={{ $('Анализ результата поиска').item.json.client_site }}",
+            "folder_id": "={{ $('Создаём папку клиента').item.json.id }}",
+            "spreadsheet_id": "={{ $('Создаём таблицу клиента').item.json.id }}",
+            "created_at": "={{ new Date().toISOString().replace('T', ' ').substring(0, 19) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {"id": "client_site", "displayName": "client_site", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
+            {"id": "folder_id", "displayName": "folder_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
+            {"id": "spreadsheet_id", "displayName": "spreadsheet_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true},
+            {"id": "created_at", "displayName": "created_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true}
+          ]
+        },
+        "options": {}
+      },
+      "id": "ii999999-9999-9999-9999-999999999999",
+      "name": "Сохраняем клиента",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1568,
+        -272
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
         "chatId": "-1003503638426",
-        "text": "=📁 <b>Новый клиент</b>\n\n🌐 Сайт: {{ $('Анализ результата поиска').first().json.client_site }}\n✅ Создана папка на Google Drive\n📊 Создана таблица для данных",
+        "text": "=📁 <b>Новый клиент</b>\n\n🌐 Сайт: {{ $('Анализ результата поиска').item.json.client_site }}\n✅ Создана папка на Google Drive\n📊 Создана таблица: {{ $('Создаём таблицу клиента').item.json.id }}",
         "additionalFields": {
           "parse_mode": "HTML"
         }
@@ -1694,7 +1965,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1568,
+        1680,
         -352
       ],
       "credentials": {
@@ -1978,8 +2249,47 @@
             "node": "Подготовка обновления очереди",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Читаем Клиенты",
+            "type": "main",
+            "index": 0
           }
         ]
+      ]
+    },
+    "Читаем Клиенты": {
+      "main": [
+        [
+          {
+            "node": "Маршрутизация по клиентам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Маршрутизация по клиентам": {
+      "main": [
+        [
+          {
+            "node": "Есть данные клиента?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Есть данные клиента?": {
+      "main": [
+        [
+          {
+            "node": "Пишем в таблицу клиента",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Format Performance Report": {
@@ -2029,6 +2339,51 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Сохраняем AI Traffic": {
+      "main": [
+        [
+          {
+            "node": "Читаем Клиенты для AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем Клиенты для AI": {
+      "main": [
+        [
+          {
+            "node": "Маршрутизация AI по клиентам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Маршрутизация AI по клиентам": {
+      "main": [
+        [
+          {
+            "node": "Есть AI данные клиента?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Есть AI данные клиента?": {
+      "main": [
+        [
+          {
+            "node": "Пишем AI в таблицу клиента",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Format AI Traffic Report": {
@@ -2121,6 +2476,28 @@
       ]
     },
     "Создаём таблицу клиента": {
+      "main": [
+        [
+          {
+            "node": "Создаём лист Данные",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Создаём лист Данные": {
+      "main": [
+        [
+          {
+            "node": "Сохраняем клиента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Сохраняем клиента": {
       "main": [
         [
           {
