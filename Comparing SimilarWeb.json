@@ -1625,17 +1625,19 @@
     },
     {
       "parameters": {
-        "resource": "fileFolder",
-        "operation": "create",
-        "name": "={{ $json.folder_name }}",
-        "options": {
-          "parentFolderId": "1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9"
-        }
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $json.folder_name }}\",\n  \"mimeType\": \"application/vnd.google-apps.folder\",\n  \"parents\": [\"1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9\"]\n}",
+        "options": {}
       },
       "id": "ee555555-5555-5555-5555-555555555555",
       "name": "Создаём папку клиента",
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1120,
         -352
