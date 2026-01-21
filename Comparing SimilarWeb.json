@@ -1,0 +1,1873 @@
+{
+  "name": "Comparing SimilarWeb",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 7
+            }
+          ]
+        }
+      },
+      "id": "c30f57a7-e012-4567-82b2-9a333d60c4c5",
+      "name": "Cron: Обработка очереди",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        528
+      ],
+      "notes": "Каждый час проверяет очередь и запускает до 9 задач"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 20
+            }
+          ]
+        }
+      },
+      "id": "2ac92421-090d-483c-8036-7e6359add027",
+      "name": "Cron: Проверка полноты (ежедневно)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        16
+      ],
+      "notes": "Раз в день проверяет полноту данных за 10 месяцев"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 432048814,
+          "mode": "list",
+          "cachedResultName": "Конкуренты",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=432048814"
+        },
+        "options": {}
+      },
+      "id": "6e969da6-83ef-4e81-86f2-c369a41d9a70",
+      "name": "Читаем всех конкурентов",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        -48
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 251226707,
+          "mode": "list",
+          "cachedResultName": "Результаты",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=251226707"
+        },
+        "options": {}
+      },
+      "id": "e937837e-9cc0-4e9e-8f64-53fcad36a036",
+      "name": "Читаем все результаты",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        176
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "39f9149b-75ff-419b-b4f2-fafd98b79844",
+      "name": "Объединяем данные",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        464,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Проверка полноты данных за последние 10 месяцев\nconst competitors = $('Читаем всех конкурентов').all();\nconst results = $('Читаем все результаты').all();\n\n// Генерируем список последних 10 месяцев\nfunction getLast10Months() {\n  const months = [];\n  const now = new Date();\n  \n  for (let i = 1; i <= 10; i++) {\n    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);\n    const year = d.getFullYear();\n    const month = String(d.getMonth() + 1).padStart(2, '0');\n    months.push(`${year}.${month}`);\n  }\n  \n  return months;\n}\n\nconst last10Months = getLast10Months();\n\n// Собираем все уникальные комбинации client_site + competitors_site\nconst allSitePairs = new Map();\n\ncompetitors.forEach(row => {\n  const client = row.json.client_site;\n  const competitor = row.json.competitors_site;\n  \n  if (client && competitor) {\n    // Добавляем клиента\n    if (!allSitePairs.has(client)) {\n      allSitePairs.set(client, { client: client, isClient: true });\n    }\n    // Добавляем конкурента\n    const key = `${client}|${competitor}`;\n    if (!allSitePairs.has(key)) {\n      allSitePairs.set(key, { client: client, site: competitor, isClient: false });\n    }\n  }\n});\n\n// Собираем существующие ключи из результатов\nconst existingKeys = new Set();\nresults.forEach(row => {\n  if (row.json.key) {\n    existingKeys.add(row.json.key);\n  }\n});\n\n// Находим недостающие данные\nconst missingData = [];\n\nallSitePairs.forEach((siteInfo, mapKey) => {\n  const site = siteInfo.isClient ? siteInfo.client : siteInfo.site;\n  const client = siteInfo.client;\n  \n  last10Months.forEach(period => {\n    const key = `${period}_${site}`;\n    \n    if (!existingKeys.has(key)) {\n      missingData.push({\n        client_site: client,\n        site: site,\n        period: period,\n        key: key,\n        priority: last10Months.indexOf(period) // Более старые = выше приоритет\n      });\n    }\n  });\n});\n\n// Сортируем по приоритету (сначала старые данные)\nmissingData.sort((a, b) => b.priority - a.priority);\n\n// Группируем по клиенту и периоду для оптимизации запросов\nconst grouped = {};\n\nmissingData.forEach(item => {\n  const groupKey = `${item.client_site}|${item.period}`;\n  \n  if (!grouped[groupKey]) {\n    grouped[groupKey] = {\n      client_site: item.client_site,\n      period: item.period,\n      sites: [item.client_site], // Клиент всегда первый\n      priority: item.priority\n    };\n  }\n  \n  if (!grouped[groupKey].sites.includes(item.site)) {\n    grouped[groupKey].sites.push(item.site);\n  }\n});\n\n// Преобразуем в массив задач для очереди\nconst queueTasks = Object.values(grouped).map(group => ({\n  queue_id: `${group.client_site}_${group.period}_${Date.now()}`,\n  client_site: group.client_site,\n  sites_list: group.sites.join(','),\n  period: group.period,\n  status: 'pending',\n  priority: group.priority,\n  created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),\n  task_id: '',\n  error_message: ''\n}));\n\n// Сортируем по приоритету\nqueueTasks.sort((a, b) => b.priority - a.priority);\n\nconst summary = {\n  totalMissing: missingData.length,\n  tasksToCreate: queueTasks.length,\n  periods: last10Months\n};\n\nconsole.log('Missing data summary:', summary);\n\nif (queueTasks.length === 0) {\n  return [{ json: { noNewTasks: true, summary } }];\n}\n\nreturn queueTasks.map(task => ({ json: task }));"
+      },
+      "id": "19b85d8a-b590-4d84-aaa8-cea697886401",
+      "name": "Анализ полноты данных",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "filter-new-tasks",
+              "leftValue": "={{ $json.noNewTasks }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fb407d3a-3b89-4c14-b095-7f30ae715581",
+      "name": "Есть новые задачи?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807869987,
+          "mode": "list",
+          "cachedResultName": "Очередь",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=807869987"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "queue_id",
+              "displayName": "queue_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "client_site",
+              "displayName": "client_site",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sites_list",
+              "displayName": "sites_list",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "period",
+              "displayName": "period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "task_id",
+              "displayName": "task_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f6b856b1-91c9-4b5d-9553-2699d6b34a39",
+      "name": "Добавляем в очередь",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        96
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "-1003503638426",
+        "text": "=📋 <b>Проверка полноты данных</b>\n\nДобавлено задач в очередь: {{ $json.length || 1 }}\n\nПериоды: последние 10 месяцев",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "0d051d82-662e-43b9-a4ac-1a403b04e689",
+      "name": "Telegram: Задачи добавлены",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1376,
+        96
+      ],
+      "webhookId": "14ccabb4-4ded-4a6c-a9e1-0c3bb571fb6a",
+      "credentials": {
+        "telegramApi": {
+          "id": "mHbM43fsaWN90avF",
+          "name": "I.Redin - ws tg log"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807869987,
+          "mode": "list",
+          "cachedResultName": "Очередь",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=807869987"
+        },
+        "options": {}
+      },
+      "id": "4be8d998-5720-4df5-9318-efa1c9836741",
+      "name": "Читаем очередь",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        528
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "filter-pending-queue",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "pending",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1969d3e6-b6bd-4220-a213-0c9fea462961",
+      "name": "Filter: Только pending",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Берём до 9 задач из очереди и добавляем рандомные задержки\nconst items = $input.all();\n\nif (items.length === 0) {\n  return [];\n}\n\n// Берём максимум 9 задач (лимит Browse AI в час)\nconst tasksToProcess = items.slice(0, 9);\n\n// Генерируем псевдо-рандомные задержки (3-7 минут между задачами)\nconst tasks = tasksToProcess.map((item, index) => {\n  // Базовая задержка 3-4 минуты + рандом 0-3 минуты\n  const baseDelay = 180 + Math.floor(Math.random() * 60); // 180-240 сек\n  const randomExtra = Math.floor(Math.random() * 180); // 0-180 сек\n  const delaySeconds = baseDelay + randomExtra; // 180-420 сек (3-7 мин)\n  \n  // Накопительная задержка для каждой задачи\n  const cumulativeDelay = index * delaySeconds;\n  \n  return {\n    json: {\n      ...item.json,\n      taskIndex: index,\n      delaySeconds: cumulativeDelay,\n      delayMinutes: Math.round(cumulativeDelay / 60),\n      scheduledAt: new Date(Date.now() + cumulativeDelay * 1000).toISOString()\n    }\n  };\n});\n\nconsole.log(`Processing ${tasks.length} tasks with random delays`);\n\nreturn tasks;"
+      },
+      "id": "653d8084-4808-40d6-bac1-c521f7d04c64",
+      "name": "Подготовка задач (макс 9)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Формируем URL для запуска робота\nconst input = $input.first().json;\n\nconst period = `${input.period}-${input.period}`;\nconst sites = input.sites_list.split(',');\nconst sitesParam = sites.map(s => s.trim()).join('%2C');\n\n// Добавляем queue_id в URL чтобы потом извлечь\nconst queueId = encodeURIComponent(input.queue_id);\n\nconst performanceUrl = `https://pro.similarweb.com/#/digitalsuite/websiteanalysis/overview/website-performance/*/804/${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\nconst aiTrafficUrl = `https://pro.similarweb.com/#/digitalsuite/ai-traffic/overview/*/804/${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\n\nreturn [{\n  json: {\n    ...input,\n    performanceUrl,\n    aiTrafficUrl,\n    sites,\n    sitesCount: sites.length\n  }\n}];"
+      },
+      "id": "d4b2714a-4e2a-4eae-99f2-b22ff0ae5bcc",
+      "name": "Подготовка URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.delaySeconds }}"
+      },
+      "id": "77b9c208-e53c-4ddd-b1f0-14508158d1f5",
+      "name": "Рандомная пауза",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        528
+      ],
+      "webhookId": "b9f86f03-61de-46cd-a25e-ed2b0eefd1b5"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807869987,
+          "mode": "list",
+          "cachedResultName": "Очередь",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=807869987"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "queue_id": "={{ $json.queue_id }}",
+            "status": "processing"
+          },
+          "matchingColumns": [
+            "queue_id"
+          ],
+          "schema": [
+            {
+              "id": "queue_id",
+              "displayName": "queue_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "client_site",
+              "displayName": "client_site",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sites_list",
+              "displayName": "sites_list",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "period",
+              "displayName": "period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "task_id",
+              "displayName": "task_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "736f8480-5c35-4fba-a16f-e165633fa376",
+      "name": "Статус: processing",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1344,
+        528
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.browse.ai/v2/robots/019b4af4-9cba-7ebe-aa82-1a9f0486f798/tasks",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $('Подготовка URL').first().json.performanceUrl }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "4db97b36-3834-411e-b072-fb871d93b1fb",
+      "name": "Запуск Performance Robot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1568,
+        528
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4IkSClA1cWUZRGFP",
+          "name": "Browse AI 2.1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 40
+      },
+      "id": "d192014c-7c9d-4846-8a11-671ff18d379d",
+      "name": "Ждём Performance",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1776,
+        528
+      ],
+      "webhookId": "c7dd6269-f291-40a4-a5fb-720e598e2f66"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.browse.ai/v2/robots/019b4bde-9c4f-7c46-b23d-966f14fa5e51/tasks",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $('Подготовка URL').first().json.aiTrafficUrl }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "482e9e1c-93f9-4a33-a206-dbc01ece6e49",
+      "name": "Запуск AI Traffic Robot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        480
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4IkSClA1cWUZRGFP",
+          "name": "Browse AI 2.1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "browse-ai-performance",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "4ace39dc-5c32-4679-841b-fe1a01a80ba1",
+      "name": "Webhook: Performance Results",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        16,
+        928
+      ],
+      "webhookId": "browse-ai-performance"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "browse-ai-aitraffic",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "6787af06-960c-4788-aaac-d163c6b6a281",
+      "name": "Webhook: AI Traffic Results",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        16,
+        1328
+      ],
+      "webhookId": "browse-ai-aitraffic"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Проверяем статус задачи и направляем на обработку или логирование ошибки\nconst input = $input.first().json;\n\nconst taskStatus = input.body?.task?.status || input.status;\nconst taskId = input.body?.task?.id || 'unknown';\nconst finishedAt = input.body?.task?.finishedAt;\nconst robotId = input.body?.robot?.id || 'unknown';\nconst originUrl = input.body?.task?.inputParameters?.originUrl || '';\n\n// Определяем тип робота\nconst isPerformance = originUrl.includes('website-performance');\nconst robotType = isPerformance ? 'Performance' : 'AI Traffic';\n\n// Извлекаем информацию из URL\nconst keyMatch = originUrl.match(/key=([^&]+)/);\nlet sites = [];\nif (keyMatch) {\n  sites = decodeURIComponent(keyMatch[1]).split(',');\n}\n\nconst periodMatch = originUrl.match(/\\/804\\/(\\d{4}\\.\\d{2})-/);\nconst period = periodMatch ? periodMatch[1] : 'unknown';\n\n// Проверяем успешность\nconst isSuccess = (taskStatus === 'successful' || taskStatus === 'completed') && finishedAt;\n\nif (!isSuccess) {\n  // Задача провалилась - логируем ошибку\n  return [{\n    json: {\n      isError: true,\n      taskId,\n      taskStatus,\n      robotType,\n      robotId,\n      period,\n      sites: sites.join(','),\n      originUrl,\n      errorMessage: input.body?.task?.failedReason || 'Unknown error',\n      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),\n      rawResponse: JSON.stringify(input.body || input).substring(0, 1000)\n    }\n  }];\n}\n\n// Задача успешна - передаём на обработку\nreturn [{\n  json: {\n    isError: false,\n    taskId,\n    taskStatus,\n    robotType,\n    period,\n    sites,\n    originUrl,\n    body: input.body\n  }\n}];"
+      },
+      "id": "2b040f47-f893-4c96-bcf8-1ddcc5f90364",
+      "name": "Проверка статуса задачи",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-error",
+              "leftValue": "={{ $json.isError }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d5a26790-1297-4843-87d8-5c6f3e8e98e5",
+      "name": "Ошибка или успех?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1263404191,
+          "mode": "list",
+          "cachedResultName": "Логи ошибок",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=1263404191"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $json.timestamp }}",
+            "task_id": "={{ $json.taskId }}",
+            "robot_type": "={{ $json.robotType }}",
+            "period": "={{ $json.period }}",
+            "sites": "={{ $json.sites }}",
+            "status": "={{ $json.taskStatus }}",
+            "error_message": "={{ $json.errorMessage }}",
+            "url": "={{ $json.originUrl }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "task_id",
+              "displayName": "task_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "robot_type",
+              "displayName": "robot_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "period",
+              "displayName": "period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sites",
+              "displayName": "sites",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b8ad290e-3517-4b06-b176-07d0cab49804",
+      "name": "Логируем ошибку",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        688,
+        800
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "-1003503638426",
+        "text": "=❌ <b>Ошибка робота</b>\n\n🤖 Робот: {{ $json.robotType }}\n📅 Период: {{ $json.period }}\n🌐 Сайты: {{ $json.sites }}\n\n⚠️ Статус: {{ $json.taskStatus }}\n📝 Ошибка: {{ $json.errorMessage }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "a8dcf2b4-b766-4c7a-8a15-82532cdcb80c",
+      "name": "Telegram: Ошибка",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        800
+      ],
+      "webhookId": "b91bfe06-5918-49cb-bcc5-ec2a0c38b614",
+      "credentials": {
+        "telegramApi": {
+          "id": "mHbM43fsaWN90avF",
+          "name": "I.Redin - ws tg log"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Парсер Performance данных с подготовкой для Google Sheets\nconst input = $input.first().json;\n\nconst body = input.body || input;\nconst rawData = body?.task?.capturedTexts || {};\nconst taskId = body?.task?.id || input.taskId || 'unknown';\nconst originUrl = body?.task?.inputParameters?.originUrl || input.originUrl || '';\n\nif (!rawData || Object.keys(rawData).length === 0) {\n  return [];\n}\n\n// Извлекаем сайты из URL\nconst keyMatch = originUrl.match(/key=([^&]+)/);\nlet sitesFromUrl = [];\nif (keyMatch) {\n  sitesFromUrl = decodeURIComponent(keyMatch[1]).split(',');\n}\nconst clientSite = sitesFromUrl[0] || '';\n\n// Извлекаем период из URL\nconst periodUrlMatch = originUrl.match(/\\/804\\/(\\d{4}\\.\\d{2})-\\d{4}\\.\\d{2}/);\nlet periodFormatted = '';\nif (periodUrlMatch) {\n  periodFormatted = periodUrlMatch[1];\n}\n\nlet data = {};\nif (Array.isArray(rawData)) {\n  rawData.forEach(item => {\n    const key = item.name || item.key;\n    const value = item.newText || item.text || item.value;\n    if (key && value) data[key] = value;\n  });\n} else {\n  data = rawData;\n}\n\nfunction extractLegendData(html) {\n  if (!html) return {};\n  const sites = {};\n  const patterns = [\n    /data-automation-title=\"true\"[^>]*>([^<]+)<\\/label>[\\s\\S]*?data-automation-value=\"true\"[^>]*>([^<]+)<\\/label>/g,\n    /iUaIjL\">([^<]+)<\\/label>[\\s\\S]*?gzsEum\">([^<]+)<\\/label>/g,\n    /lfbxrA\">([^<]+)<\\/label>[\\s\\S]*?gzsEum\">([^<]+)<\\/label>/g,\n    /jNDqYY\">([^<]+)<\\/label>[\\s\\S]*?gzsEum\">([^<]+)<\\/label>/g\n  ];\n  \n  patterns.forEach(pattern => {\n    let match;\n    while ((match = pattern.exec(html)) !== null) {\n      const site = match[1].trim();\n      const value = match[2].trim();\n      if (site && value && site.includes('.')) {\n        sites[site] = value;\n      }\n    }\n  });\n  return sites;\n}\n\nfunction extractTableData(html) {\n  if (!html) return {};\n  const sites = {};\n  \n  const domainPattern = /data-automation=\"domain-name\">([^<]+)<\\/span>/g;\n  const domains = [];\n  let match;\n  while ((match = domainPattern.exec(html)) !== null) {\n    domains.push(match[1].trim());\n  }\n  \n  const valuePattern = /compare-progress-value[^>]*>([^<]+)</g;\n  const values = [];\n  while ((match = valuePattern.exec(html)) !== null) {\n    values.push(match[1].trim());\n  }\n  \n  for (let i = 0; i < domains.length && i < values.length; i++) {\n    sites[domains[i]] = values[i];\n  }\n  \n  return sites;\n}\n\nlet period = 'N/A';\nlet country = 'N/A';\nconst headerHtml = data['Total visits'] || data['Total Visit 2'] || '';\n\nconst periodMatch = headerHtml.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+\\d{4}/i);\nif (periodMatch) period = periodMatch[0];\n\nif (headerHtml.includes('Ukraine')) country = 'Ukraine';\nelse if (headerHtml.includes('Worldwide')) country = 'Worldwide';\n\nif (!periodFormatted && period !== 'N/A') {\n  const monthMap = {\n    'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',\n    'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',\n    'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'\n  };\n  const periodParsed = period.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+(\\d{4})/i);\n  if (periodParsed) {\n    const month = monthMap[periodParsed[1]];\n    const year = periodParsed[2];\n    periodFormatted = `${year}.${month}`;\n  }\n}\n\n// === ЛОГИКА TOTAL VISITS ===\n// 1. Сначала пытаемся взять из \"Total visits\"\n// 2. Если пусто — берём из \"Total Visit 2\"\n// 3. Если и там пусто — будет \"error\"\nlet totalVisits = {};\n\nif (data['Total visits']) {\n  totalVisits = extractTableData(data['Total visits']);\n}\n\n// Fallback на Total Visit 2\nif (Object.keys(totalVisits).length === 0 && data['Total Visit 2']) {\n  totalVisits = extractTableData(data['Total Visit 2']);\n}\n\n// Парсим остальные каналы\nconst direct = extractLegendData(data['Direct']);\nconst organicSearch = extractLegendData(data['Organic Search']);\nconst paidSearch = extractLegendData(data['Paid Search']);\nconst displayAds = extractLegendData(data['Display Ads']);\nconst social = extractLegendData(data['Sosial'] || data['Social']);\nconst email = extractLegendData(data['Email']);\n\nconst today = new Date().toISOString().split('T')[0];\n\n// Собираем все уникальные сайты\nconst allSites = new Set();\n[totalVisits, direct, organicSearch, paidSearch, displayAds, social, email].forEach(channel => {\n  Object.keys(channel).forEach(site => allSites.add(site));\n});\n\n// Если сайтов нет — берём из URL\nif (allSites.size === 0 && sitesFromUrl.length > 0) {\n  sitesFromUrl.forEach(site => allSites.add(site));\n}\n\nconst sitesArray = Array.from(allSites);\n\n// Проверяем, есть ли данные по Total Visits\nconst hasTotalVisitsData = Object.keys(totalVisits).length > 0;\n\nconst sheetsRows = sitesArray.map((site) => ({\n  'date': today,\n  'period': periodFormatted,\n  'client_site': clientSite,\n  'competitors_site': site,\n  'type': site === clientSite ? 'client' : 'competitor',\n  'Total Visit': hasTotalVisitsData ? (totalVisits[site] || 'N/A') : 'error',\n  'Direct': direct[site] || '',\n  'Organic Search': organicSearch[site] || '',\n  'Paid Search': paidSearch[site] || '',\n  'Display Ads': displayAds[site] || '',\n  'Social': social[site] || '',\n  'Email': email[site] || '',\n  'AI Traffic': '',\n  'Task ID': taskId,\n  'key': `${periodFormatted}_${site}`\n}));\n\nreturn [{\n  json: {\n    taskId,\n    type: 'performance',\n    period,\n    periodFormatted,\n    country,\n    clientSite,\n    channels: {\n      totalVisits,\n      direct,\n      organicSearch,\n      paidSearch,\n      displayAds,\n      social,\n      email\n    },\n    sheetsRows,\n    raw: data\n  }\n}];"
+      },
+      "id": "c2ce219d-507c-4ff5-8b2f-c258da680ca1",
+      "name": "Parse Performance Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "sheetsRows",
+        "options": {}
+      },
+      "id": "0f4f9ca9-e43d-463a-a25d-37e69ec4f3a3",
+      "name": "Split Out: Performance",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        896,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 251226707,
+          "mode": "list",
+          "cachedResultName": "Результаты",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=251226707"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "key"
+          ],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "period",
+              "displayName": "period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "client_site",
+              "displayName": "client_site",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "competitors_site",
+              "displayName": "competitors_site",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Visit",
+              "displayName": "Total Visit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Direct",
+              "displayName": "Direct",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Organic Search",
+              "displayName": "Organic Search",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Paid Search",
+              "displayName": "Paid Search",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Display Ads",
+              "displayName": "Display Ads",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Social",
+              "displayName": "Social",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Traffic",
+              "displayName": "AI Traffic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "key",
+              "displayName": "key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "0b7dea74-10b6-43ee-b102-2cc002c26a92",
+      "name": "Сохраняем Performance",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        1040
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Обновляем статус в очереди после успешного сохранения\nconst performanceData = $('Parse Performance Data').first().json;\nconst originUrl = $('Проверка статуса задачи').first().json.originUrl || '';\n\n// Извлекаем queue_id из URL\nconst qidMatch = originUrl.match(/qid=([^&]+)/);\nconst queueId = qidMatch ? decodeURIComponent(qidMatch[1]) : '';\n\nconst now = new Date().toISOString().replace('T', ' ').substring(0, 19);\n\nreturn [{\n  json: {\n    queue_id: queueId,\n    status: 'done',\n    task_id: performanceData.taskId\n  }\n}];"
+      },
+      "id": "c792cf9c-2878-4b26-8ccb-5ebf399da95a",
+      "name": "Подготовка обновления очереди",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Формируем отчёт из Performance данных\nconst data = $('Parse Performance Data').first().json;\n\nlet report = '📊 <b>SimilarWeb Report</b>\\n';\nreport += `📅 ${data.periodFormatted} | 🇺🇦 ${data.country}\\n`;\nreport += `👤 Клиент: ${data.clientSite}\\n\\n`;\n\nconst channels = data.channels;\nconst hasChannels = Object.values(channels).some(ch => Object.keys(ch).length > 0);\n\nif (hasChannels) {\n  report += '━━━━━━━━━━━━━━━━━━━━━\\n';\n  report += '🚦 <b>TRAFFIC SOURCES</b>\\n';\n  report += '━━━━━━━━━━━━━━━━━━━━━\\n\\n';\n  \n  const channelConfig = [\n    { key: 'totalVisits', name: 'Total Visits', emoji: '📈' },\n    { key: 'direct', name: 'Direct', emoji: '🔗' },\n    { key: 'organicSearch', name: 'Organic Search', emoji: '🔍' },\n    { key: 'paidSearch', name: 'Paid Search', emoji: '💰' },\n    { key: 'displayAds', name: 'Display Ads', emoji: '📺' },\n    { key: 'social', name: 'Social', emoji: '📱' },\n    { key: 'email', name: 'Email', emoji: '📧' }\n  ];\n  \n  channelConfig.forEach(({ key, name, emoji }) => {\n    const channelData = channels[key];\n    if (channelData && Object.keys(channelData).length > 0) {\n      report += `${emoji} <b>${name}</b>\\n`;\n      Object.entries(channelData).forEach(([site, value], idx) => {\n        const siteEmoji = idx === 0 ? '🔵' : idx === 1 ? '🟠' : idx === 2 ? '🟢' : '🟡';\n        report += `   ${siteEmoji} ${site}: ${value}\\n`;\n      });\n      report += '\\n';\n    }\n  });\n}\n\nreport += '━━━━━━━━━━━━━━━━━━━━━\\n';\nreport += '✅ Данные сохранены';\n\nreturn [{\n  json: {\n    report,\n    ...data\n  }\n}];"
+      },
+      "id": "4a021a4f-7cab-4c2a-b95c-825217df8e53",
+      "name": "Format Performance Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        1216
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "-1003503638426",
+        "text": "={{ $json.report }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "b78c405f-2ae4-48a6-be0f-361efa579c3e",
+      "name": "Telegram: Performance",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        1216
+      ],
+      "webhookId": "d95e8d2d-b66c-4ced-a7fc-c90b43ce5a46",
+      "credentials": {
+        "telegramApi": {
+          "id": "mHbM43fsaWN90avF",
+          "name": "I.Redin - ws tg log"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Парсер AI Traffic данных\nconst input = $input.first().json;\n\nconst body = input.body || input;\nconst taskStatus = body?.task?.status || input.taskStatus;\n\nif (taskStatus !== 'successful' && taskStatus !== 'completed') {\n  return [];\n}\n\nconst rawData = body?.task?.capturedTexts || {};\nconst taskId = body?.task?.id || input.taskId || 'unknown';\nconst originUrl = body?.task?.inputParameters?.originUrl || input.originUrl || '';\n\nconst keyMatch = originUrl.match(/key=([^&]+)/);\nlet sitesFromUrl = [];\nif (keyMatch) {\n  sitesFromUrl = decodeURIComponent(keyMatch[1]).split(',');\n}\nconst clientSite = sitesFromUrl[0] || '';\n\nlet periodFormatted = '';\nconst periodUrlMatch = originUrl.match(/\\/804\\/(\\d{4}\\.\\d{2})-/);\nif (periodUrlMatch) {\n  periodFormatted = periodUrlMatch[1];\n}\n\nlet data = {};\nif (Array.isArray(rawData)) {\n  rawData.forEach(item => {\n    const key = item.name || item.key;\n    const value = item.newText || item.text || item.value;\n    if (key && value) data[key] = value;\n  });\n} else {\n  data = rawData;\n}\n\nfunction extractLegendData(html) {\n  if (!html) return {};\n  const sites = {};\n  const patterns = [\n    /gcxjWm\">([^<]+)<\\/label><\\/div><label[^>]*gzsEum\">([^<]+)</g,\n    /lfbxrA\">([^<]+)<\\/label>.*?gzsEum\">([^<]+)</g,\n    /data-automation-title=\"true\"[^>]*>([^<]+)<\\/label>.*?data-automation-value=\"true\"[^>]*>([^<]+)<\\/label>/gs\n  ];\n  \n  patterns.forEach(pattern => {\n    let match;\n    while ((match = pattern.exec(html)) !== null) {\n      const site = match[1].trim();\n      const value = match[2].trim();\n      if (site && value && site.includes('.')) {\n        sites[site] = value;\n      }\n    }\n  });\n  return sites;\n}\n\nconst aiTraffic = extractLegendData(data['Avg Traffic']);\nconst today = new Date().toISOString().split('T')[0];\n\n// Если данных нет - всё равно создаём записи с N/A\nconst allSites = Object.keys(aiTraffic);\nif (allSites.length === 0 && sitesFromUrl.length > 0) {\n  sitesFromUrl.forEach(site => allSites.push(site));\n}\n\n// Создаём записи: если есть данные - используем их, если нет - N/A\nconst sheetsRows = allSites.map((site) => ({\n  'key': `${periodFormatted}_${site}`,\n  'AI Traffic': aiTraffic[site] || 'N/A'\n}));\n\n// Если вообще нет сайтов - возвращаем пустой массив\nif (sheetsRows.length === 0) {\n  return [];\n}\n\nreturn [{\n  json: {\n    taskId,\n    type: 'aitraffic',\n    clientSite,\n    periodFormatted,\n    aiTraffic,\n    sheetsRows,\n    raw: data\n  }\n}];"
+      },
+      "id": "56daa802-3f0a-484a-a4f0-1581abab68ca",
+      "name": "Parse AI Traffic Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "sheetsRows",
+        "options": {}
+      },
+      "id": "01d364b4-a16f-4757-8952-7f7bc652b036",
+      "name": "Split Out: AI Traffic",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        464,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 251226707,
+          "mode": "list",
+          "cachedResultName": "Результаты",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=251226707"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "key": "={{ $json.key }}",
+            "AI Traffic": "={{ $json['AI Traffic'] }}"
+          },
+          "matchingColumns": [
+            "key"
+          ],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "period",
+              "displayName": "period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "client_site",
+              "displayName": "client_site",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "competitors_site",
+              "displayName": "competitors_site",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Visit",
+              "displayName": "Total Visit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Direct",
+              "displayName": "Direct",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Organic Search",
+              "displayName": "Organic Search",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Paid Search",
+              "displayName": "Paid Search",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Display Ads",
+              "displayName": "Display Ads",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Social",
+              "displayName": "Social",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Traffic",
+              "displayName": "AI Traffic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "key",
+              "displayName": "key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b3131714-bf2c-48ae-b377-7078e1e55e87",
+      "name": "Сохраняем AI Traffic",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        688,
+        1328
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Формируем отчёт из AI Traffic данных\nconst data = $('Parse AI Traffic Data').first().json;\n\nlet report = '🤖 <b>AI TRAFFIC</b>\\n';\nreport += `📅 ${data.periodFormatted}\\n`;\nreport += '━━━━━━━━━━━━━━━━━━━━━\\n\\n';\n\nconst aiTraffic = data.aiTraffic || {};\n\nif (Object.keys(aiTraffic).length > 0) {\n  Object.entries(aiTraffic).forEach(([site, value], idx) => {\n    const emoji = idx === 0 ? '🔵' : idx === 1 ? '🟠' : idx === 2 ? '🟢' : '🟡';\n    report += `${emoji} ${site}: <b>${value}</b>\\n`;\n  });\n} else {\n  report += 'Нет данных по AI Traffic\\n';\n}\n\nreport += '\\n━━━━━━━━━━━━━━━━━━━━━\\n';\nreport += '✅ AI Traffic сохранён';\n\nreturn [{\n  json: {\n    report,\n    ...data\n  }\n}];"
+      },
+      "id": "bf059aa6-9054-4c56-8bc8-b383c8ca02e6",
+      "name": "Format AI Traffic Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "-1003503638426",
+        "text": "={{ $json.report }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "9f4d1389-7d54-4223-922c-aa320e750272",
+      "name": "Telegram: AI Traffic",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        1504
+      ],
+      "webhookId": "47978784-7cd7-48fd-a4a1-b564e65c92ca",
+      "credentials": {
+        "telegramApi": {
+          "id": "mHbM43fsaWN90avF",
+          "name": "I.Redin - ws tg log"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807869987,
+          "mode": "list",
+          "cachedResultName": "Очередь",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=807869987"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "queue_id": "={{ $json.queue_id }}",
+            "status": "done",
+            "task_id": "={{ $json.task_id }}"
+          },
+          "matchingColumns": [
+            "queue_id"
+          ],
+          "schema": [
+            {
+              "id": "queue_id",
+              "displayName": "queue_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "client_site",
+              "displayName": "client_site",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sites_list",
+              "displayName": "sites_list",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "period",
+              "displayName": "period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "task_id",
+              "displayName": "task_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "6cf86895-175e-432d-8259-09fff265593e",
+      "name": "Обновляем статус очереди: done",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1568,
+        1040
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron: Проверка полноты (ежедневно)": {
+      "main": [
+        [
+          {
+            "node": "Читаем всех конкурентов",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Читаем все результаты",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем всех конкурентов": {
+      "main": [
+        [
+          {
+            "node": "Объединяем данные",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем все результаты": {
+      "main": [
+        [
+          {
+            "node": "Объединяем данные",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Объединяем данные": {
+      "main": [
+        [
+          {
+            "node": "Анализ полноты данных",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Анализ полноты данных": {
+      "main": [
+        [
+          {
+            "node": "Есть новые задачи?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Есть новые задачи?": {
+      "main": [
+        [
+          {
+            "node": "Добавляем в очередь",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Добавляем в очередь": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Задачи добавлены",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron: Обработка очереди": {
+      "main": [
+        []
+      ]
+    },
+    "Читаем очередь": {
+      "main": [
+        [
+          {
+            "node": "Filter: Только pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Только pending": {
+      "main": [
+        [
+          {
+            "node": "Подготовка задач (макс 9)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка задач (макс 9)": {
+      "main": [
+        [
+          {
+            "node": "Рандомная пауза",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Рандомная пауза": {
+      "main": [
+        [
+          {
+            "node": "Подготовка URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка URL": {
+      "main": [
+        [
+          {
+            "node": "Статус: processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Статус: processing": {
+      "main": [
+        [
+          {
+            "node": "Запуск Performance Robot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Запуск Performance Robot": {
+      "main": [
+        [
+          {
+            "node": "Ждём Performance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ждём Performance": {
+      "main": [
+        [
+          {
+            "node": "Запуск AI Traffic Robot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Performance Results": {
+      "main": [
+        [
+          {
+            "node": "Проверка статуса задачи",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверка статуса задачи": {
+      "main": [
+        [
+          {
+            "node": "Ошибка или успех?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ошибка или успех?": {
+      "main": [
+        [
+          {
+            "node": "Логируем ошибку",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Performance Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Логируем ошибку": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Ошибка",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Performance Data": {
+      "main": [
+        [
+          {
+            "node": "Split Out: Performance",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format Performance Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out: Performance": {
+      "main": [
+        [
+          {
+            "node": "Сохраняем Performance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Сохраняем Performance": {
+      "main": [
+        [
+          {
+            "node": "Подготовка обновления очереди",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Performance Report": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Performance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: AI Traffic Results": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Traffic Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Traffic Data": {
+      "main": [
+        [
+          {
+            "node": "Split Out: AI Traffic",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format AI Traffic Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out: AI Traffic": {
+      "main": [
+        [
+          {
+            "node": "Сохраняем AI Traffic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format AI Traffic Report": {
+      "main": [
+        [
+          {
+            "node": "Telegram: AI Traffic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка обновления очереди": {
+      "main": [
+        [
+          {
+            "node": "Обновляем статус очереди: done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": true,
+    "errorWorkflow": "QQu2DVSfdVpU9Rhw",
+    "timeSavedPerExecution": 500
+  },
+  "versionId": "9943cb9d-4cc4-4766-80d2-ca18926f42c3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9d17d52227a4e309d92bfdb193ff498ba1e95c0c0bc8ff19ed6534df76683725"
+  },
+  "id": "C5gcCnSahblLUIjZ",
+  "tags": []
+}
