@@ -110,7 +110,9 @@
       }
     },
     {
-      "parameters": {},
+      "parameters": {
+        "numberInputs": 3
+      },
       "id": "39f9149b-75ff-419b-b4f2-fafd98b79844",
       "name": "Объединяем данные",
       "type": "n8n-nodes-base.merge",
@@ -1992,6 +1994,11 @@
             "node": "Читаем все результаты",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Читаем очередь",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -2085,6 +2092,11 @@
             "node": "Filter: Только pending",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Объединяем данные",
+            "type": "main",
+            "index": 2
           }
         ]
       ]
