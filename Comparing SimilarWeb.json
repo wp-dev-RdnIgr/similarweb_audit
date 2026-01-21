@@ -1533,9 +1533,7 @@
         "resource": "fileFolder",
         "operation": "search",
         "queryString": "=mimeType='application/vnd.google-apps.folder' and name='{{ $json.folder_name }}' and '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9' in parents and trashed=false",
-        "options": {
-          "fields": "id, name"
-        }
+        "options": {}
       },
       "id": "bb222222-2222-2222-2222-222222222222",
       "name": "Проверяем папку клиента",
