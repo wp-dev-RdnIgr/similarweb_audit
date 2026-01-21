@@ -1882,19 +1882,18 @@
     },
     {
       "parameters": {
-        "resource": "sheet",
-        "operation": "create",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $json.id }}",
-          "mode": "id"
-        },
-        "title": "Данные"
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.id }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"requests\": [\n    {\n      \"addSheet\": {\n        \"properties\": {\n          \"title\": \"Данные\"\n        }\n      }\n    }\n  ]\n}"
       },
       "id": "hh888888-8888-8888-8888-888888888888",
       "name": "Создаём лист Данные",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1456,
         -352
