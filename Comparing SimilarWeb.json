@@ -1734,7 +1734,8 @@
     },
     {
       "parameters": {
-        "jsCode": "// Проверяем папку клиента через Google Drive API\n// Обрабатываем текущий элемент из списка клиентов\nconst clientSite = $input.item.json.client_site;\nconst parentFolderId = '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9';\n\n// Передаём данные для HTTP Request и сохраняем client_site в output\nreturn [{\n  json: {\n    client_site: clientSite,\n    folder_name: clientSite,\n    parent_folder_id: parentFolderId,\n    query: `mimeType='application/vnd.google-apps.folder' and name='${clientSite}' and '${parentFolderId}' in parents and trashed=false`\n  }\n}];"
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Проверяем папку клиента через Google Drive API\n// Обрабатываем текущий элемент из списка клиентов\nconst clientSite = $input.item.json.client_site;\nconst parentFolderId = '1Z069NZFgLq1zBS9EM3fKLFfkyq8BO1h9';\n\n// Передаём данные для HTTP Request и сохраняем client_site в output\nreturn {\n  client_site: clientSite,\n  folder_name: clientSite,\n  parent_folder_id: parentFolderId,\n  query: `mimeType='application/vnd.google-apps.folder' and name='${clientSite}' and '${parentFolderId}' in parents and trashed=false`\n};"
       },
       "id": "bb222222-2222-2222-2222-222222222222",
       "name": "Подготовка запроса Drive",
@@ -1783,7 +1784,8 @@
     },
     {
       "parameters": {
-        "jsCode": "// Анализируем результат поиска папки для ВСЕХ клиентов\nconst httpResults = $input.all();\nconst originalItems = $('Подготовка запроса Drive').all();\n\nconst results = [];\n\nfor (let i = 0; i < httpResults.length; i++) {\n  const files = httpResults[i].json.files || [];\n  const clientSite = originalItems[i].json.client_site;\n  \n  const folderExists = files.length > 0;\n  const folderId = folderExists ? files[0].id : null;\n  \n  results.push({\n    json: {\n      client_site: clientSite,\n      folder_exists: folderExists,\n      folder_id: folderId,\n      folder_name: clientSite\n    }\n  });\n}\n\nreturn results;"
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Анализируем результат поиска папки\nconst files = $input.item.json.files || [];\nconst clientSite = $('Подготовка запроса Drive').item.json.client_site;\n\nconst folderExists = files.length > 0;\nconst folderId = folderExists ? files[0].id : null;\n\nreturn {\n  client_site: clientSite,\n  folder_exists: folderExists,\n  folder_id: folderId,\n  folder_name: clientSite\n};"
       },
       "id": "cc333333-3333-3333-3333-333333333333",
       "name": "Анализ результата поиска",
