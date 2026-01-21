@@ -124,7 +124,40 @@
     },
     {
       "parameters": {
-        "jsCode": "// Проверка полноты данных за последние 10 месяцев\n// ОПТИМИЗАЦИЯ: Разбиваем конкурентов на группы по 5 сайтов (ограничение SimilarWeb)\nconst competitors = $('Читаем всех конкурентов').all();\nconst results = $('Читаем все результаты').all();\n\n// Читаем существующую очередь чтобы не дублировать задачи\nlet existingQueue = [];\ntry {\n  existingQueue = $('Читаем очередь').all();\n} catch (e) {\n  // Очередь может быть пустой\n}\n\n// Максимум сайтов в одном запросе SimilarWeb (клиент + 4 конкурента)\nconst MAX_SITES_PER_REQUEST = 5;\n\n// Функция нормализации домена (убираем https://, www., trailing slash)\nfunction normalizeDomain(url) {\n  if (!url) return '';\n  return url\n    .replace(/^https?:\\/\\//i, '')\n    .replace(/^www\\./i, '')\n    .replace(/\\/+$/, '')\n    .toLowerCase()\n    .trim();\n}\n\n// Генерируем список последних 10 месяцев (с учётом задержки SimilarWeb в 2 месяца)\n// SimilarWeb не показывает данные за последние 2 месяца\nfunction getLast10Months() {\n  const months = [];\n  const now = new Date();\n  \n  // Начинаем с 3-го месяца назад (пропускаем текущий и предыдущий)\n  for (let i = 3; i <= 12; i++) {\n    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);\n    const year = d.getFullYear();\n    const month = String(d.getMonth() + 1).padStart(2, '0');\n    months.push(`${year}.${month}`);\n  }\n  \n  return months;\n}\n\nconst last10Months = getLast10Months();\n\n// Группируем конкурентов по клиентам (с нормализацией доменов)\nconst clientCompetitors = new Map();\n\ncompetitors.forEach(row => {\n  const client = normalizeDomain(row.json.client_site);\n  const competitor = normalizeDomain(row.json.competitors_site);\n  \n  if (client && competitor) {\n    if (!clientCompetitors.has(client)) {\n      clientCompetitors.set(client, []);\n    }\n    if (!clientCompetitors.get(client).includes(competitor)) {\n      clientCompetitors.get(client).push(competitor);\n    }\n  }\n});\n\n// Собираем существующие ключи из результатов\nconst existingKeys = new Set();\nresults.forEach(row => {\n  if (row.json.key) {\n    existingKeys.add(row.json.key);\n  }\n});\n\n// Собираем существующие задачи в очереди (pending и processing)\nconst existingQueueKeys = new Set();\nexistingQueue.forEach(row => {\n  const status = row.json.status;\n  if (status === 'pending' || status === 'processing') {\n    // Ключ: client_site + period + sites_list\n    const key = `${row.json.client_site}_${row.json.period}_${row.json.sites_list}`;\n    existingQueueKeys.add(key);\n  }\n});\n\n// Функция для разбиения массива на чанки\nfunction chunkArray(array, chunkSize) {\n  const chunks = [];\n  for (let i = 0; i < array.length; i += chunkSize) {\n    chunks.push(array.slice(i, i + chunkSize));\n  }\n  return chunks;\n}\n\n// Создаём задачи с разбиением на группы\nconst queueTasks = [];\n\nclientCompetitors.forEach((competitorsList, clientSite) => {\n  const competitorChunks = chunkArray(competitorsList, MAX_SITES_PER_REQUEST - 1);\n  \n  competitorChunks.forEach((chunk, chunkIndex) => {\n    last10Months.forEach((period, periodIndex) => {\n      const sitesInRequest = [clientSite, ...chunk];\n      const sitesList = sitesInRequest.join(',');\n      \n      // Проверяем, есть ли уже такая задача в очереди\n      const queueKey = `${clientSite}_${period}_${sitesList}`;\n      if (existingQueueKeys.has(queueKey)) {\n        return; // Пропускаем - задача уже в очереди\n      }\n      \n      // Проверяем, есть ли недостающие данные для этой группы\n      const missingSites = sitesInRequest.filter(site => {\n        const key = `${period}_${site}`;\n        return !existingKeys.has(key);\n      });\n      \n      // Если есть хотя бы один сайт без данных - создаём задачу\n      if (missingSites.length > 0) {\n        const taskId = `${clientSite}_${period}_chunk${chunkIndex}_${Date.now()}`;\n        \n        queueTasks.push({\n          queue_id: taskId,\n          client_site: clientSite,\n          sites_list: sitesList,\n          chunk_index: chunkIndex,\n          total_chunks: competitorChunks.length,\n          period: period,\n          status: 'pending',\n          priority: periodIndex,\n          created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),\n          task_id: '',\n          error_message: ''\n        });\n      }\n    });\n  });\n});\n\nqueueTasks.sort((a, b) => b.priority - a.priority);\n\nconst summary = {\n  totalClients: clientCompetitors.size,\n  totalTasks: queueTasks.length,\n  skippedExisting: existingQueueKeys.size,\n  periods: last10Months,\n  maxSitesPerRequest: MAX_SITES_PER_REQUEST\n};\n\nconsole.log('Queue tasks summary:', summary);\n\nif (queueTasks.length === 0) {\n  return [{ json: { noNewTasks: true, summary } }];\n}\n\nreturn queueTasks.map(task => ({ json: task }));"
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807869987,
+          "mode": "list",
+          "cachedResultName": "Очередь",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=807869987"
+        },
+        "options": {}
+      },
+      "id": "queue-check-node-0001-0001-000000000001",
+      "name": "Читаем очередь (проверка)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        240
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Проверка полноты данных за последние 10 месяцев\n// ОПТИМИЗАЦИЯ: Разбиваем конкурентов на группы по 5 сайтов (ограничение SimilarWeb)\nconst competitors = $('Читаем всех конкурентов').all();\nconst results = $('Читаем все результаты').all();\n\n// Читаем существующую очередь чтобы не дублировать задачи\nlet existingQueue = [];\ntry {\n  existingQueue = $('Читаем очередь (проверка)').all();\n} catch (e) {\n  // Очередь может быть пустой\n}\n\n// Максимум сайтов в одном запросе SimilarWeb (клиент + 4 конкурента)\nconst MAX_SITES_PER_REQUEST = 5;\n\n// Функция нормализации домена (убираем https://, www., trailing slash)\nfunction normalizeDomain(url) {\n  if (!url) return '';\n  return url\n    .replace(/^https?:\\/\\//i, '')\n    .replace(/^www\\./i, '')\n    .replace(/\\/+$/, '')\n    .toLowerCase()\n    .trim();\n}\n\n// Генерируем список последних 10 месяцев (с учётом задержки SimilarWeb в 2 месяца)\n// SimilarWeb не показывает данные за последние 2 месяца\nfunction getLast10Months() {\n  const months = [];\n  const now = new Date();\n  \n  // Начинаем с 3-го месяца назад (пропускаем текущий и предыдущий)\n  for (let i = 3; i <= 12; i++) {\n    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);\n    const year = d.getFullYear();\n    const month = String(d.getMonth() + 1).padStart(2, '0');\n    months.push(`${year}.${month}`);\n  }\n  \n  return months;\n}\n\nconst last10Months = getLast10Months();\n\n// Группируем конкурентов по клиентам (с нормализацией доменов)\nconst clientCompetitors = new Map();\n\ncompetitors.forEach(row => {\n  const client = normalizeDomain(row.json.client_site);\n  const competitor = normalizeDomain(row.json.competitors_site);\n  \n  if (client && competitor) {\n    if (!clientCompetitors.has(client)) {\n      clientCompetitors.set(client, []);\n    }\n    if (!clientCompetitors.get(client).includes(competitor)) {\n      clientCompetitors.get(client).push(competitor);\n    }\n  }\n});\n\n// Собираем существующие ключи из результатов\nconst existingKeys = new Set();\nresults.forEach(row => {\n  if (row.json.key) {\n    existingKeys.add(row.json.key);\n  }\n});\n\n// Собираем существующие задачи в очереди (pending и processing)\nconst existingQueueKeys = new Set();\nexistingQueue.forEach(row => {\n  const status = row.json.status;\n  if (status === 'pending' || status === 'processing') {\n    // Ключ: client_site + period + sites_list\n    const key = `${row.json.client_site}_${row.json.period}_${row.json.sites_list}`;\n    existingQueueKeys.add(key);\n  }\n});\n\n// Функция для разбиения массива на чанки\nfunction chunkArray(array, chunkSize) {\n  const chunks = [];\n  for (let i = 0; i < array.length; i += chunkSize) {\n    chunks.push(array.slice(i, i + chunkSize));\n  }\n  return chunks;\n}\n\n// Создаём задачи с разбиением на группы\nconst queueTasks = [];\n\nclientCompetitors.forEach((competitorsList, clientSite) => {\n  const competitorChunks = chunkArray(competitorsList, MAX_SITES_PER_REQUEST - 1);\n  \n  competitorChunks.forEach((chunk, chunkIndex) => {\n    last10Months.forEach((period, periodIndex) => {\n      const sitesInRequest = [clientSite, ...chunk];\n      const sitesList = sitesInRequest.join(',');\n      \n      // Проверяем, есть ли уже такая задача в очереди\n      const queueKey = `${clientSite}_${period}_${sitesList}`;\n      if (existingQueueKeys.has(queueKey)) {\n        return; // Пропускаем - задача уже в очереди\n      }\n      \n      // Проверяем, есть ли недостающие данные для этой группы\n      const missingSites = sitesInRequest.filter(site => {\n        const key = `${period}_${site}`;\n        return !existingKeys.has(key);\n      });\n      \n      // Если есть хотя бы один сайт без данных - создаём задачу\n      if (missingSites.length > 0) {\n        const taskId = `${clientSite}_${period}_chunk${chunkIndex}_${Date.now()}`;\n        \n        queueTasks.push({\n          queue_id: taskId,\n          client_site: clientSite,\n          sites_list: sitesList,\n          chunk_index: chunkIndex,\n          total_chunks: competitorChunks.length,\n          period: period,\n          status: 'pending',\n          priority: periodIndex,\n          created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),\n          task_id: '',\n          error_message: ''\n        });\n      }\n    });\n  });\n});\n\nqueueTasks.sort((a, b) => b.priority - a.priority);\n\nconst summary = {\n  totalClients: clientCompetitors.size,\n  totalTasks: queueTasks.length,\n  skippedExisting: existingQueueKeys.size,\n  periods: last10Months,\n  maxSitesPerRequest: MAX_SITES_PER_REQUEST\n};\n\nconsole.log('Queue tasks summary:', summary);\n\nif (queueTasks.length === 0) {\n  return [{ json: { noNewTasks: true, summary } }];\n}\n\nreturn queueTasks.map(task => ({ json: task }));"
       },
       "id": "19b85d8a-b590-4d84-aaa8-cea697886401",
       "name": "Анализ полноты данных",
@@ -2007,7 +2040,7 @@
   ],
   "pinData": {},
   "connections": {
-    "Cron: Проверка полноты (ежедневно)": {
+    "Cron: Проверка полноты (2x в день)": {
       "main": [
         [
           {
@@ -2021,7 +2054,7 @@
             "index": 0
           },
           {
-            "node": "Читаем очередь",
+            "node": "Читаем очередь (проверка)",
             "type": "main",
             "index": 0
           }
@@ -2117,7 +2150,13 @@
             "node": "Filter: Только pending",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Читаем очередь (проверка)": {
+      "main": [
+        [
           {
             "node": "Объединяем данные",
             "type": "main",
