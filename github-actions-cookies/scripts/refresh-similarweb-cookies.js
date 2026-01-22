@@ -11,6 +11,10 @@ const CONFIG = {
     apiKey: process.env.BROWSE_AI_API_KEY,
     robotId: process.env.BROWSE_AI_ROBOT_ID,
     apiUrl: 'https://api.browse.ai/v2/robots'
+  },
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN,
+    chatId: process.env.TELEGRAM_CHAT_ID
   }
 };
 
@@ -28,6 +32,40 @@ function validateConfig() {
   if (missing.length > 0) {
     console.error('Missing required environment variables:', missing.join(', '));
     process.exit(1);
+  }
+}
+
+// Send Telegram notification
+async function sendTelegramNotification(message, isError = false) {
+  if (!CONFIG.telegram.botToken || !CONFIG.telegram.chatId) {
+    console.log('Telegram not configured, skipping notification');
+    return;
+  }
+
+  const emoji = isError ? '❌' : '✅';
+  const text = `${emoji} <b>SimilarWeb Cookie Refresh</b>\n\n${message}`;
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${CONFIG.telegram.botToken}/sendMessage`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CONFIG.telegram.chatId,
+          text: text,
+          parse_mode: 'HTML'
+        })
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Telegram notification failed:', await response.text());
+    } else {
+      console.log('Telegram notification sent');
+    }
+  } catch (error) {
+    console.error('Error sending Telegram notification:', error.message);
   }
 }
 
@@ -200,10 +238,26 @@ async function main() {
     console.log('SUCCESS: Cookies updated successfully!');
     console.log(`Finished at: ${new Date().toISOString()}`);
 
+    // Send success notification
+    const successMessage = `🍪 Cookies обновлены успешно!\n\n` +
+      `📊 Обновлено: ${browseAiCookies.length} cookies\n` +
+      `🤖 Robot ID: <code>${CONFIG.browseAi.robotId}</code>\n` +
+      `🕐 Время: ${new Date().toLocaleString('uk-UA', { timeZone: 'Europe/Kyiv' })}`;
+
+    await sendTelegramNotification(successMessage);
+
   } catch (error) {
     console.error('');
     console.error('ERROR:', error.message);
     console.error(error.stack);
+
+    // Send error notification
+    const errorMessage = `Ошибка обновления cookies!\n\n` +
+      `❗ ${error.message}\n` +
+      `🕐 Время: ${new Date().toLocaleString('uk-UA', { timeZone: 'Europe/Kyiv' })}`;
+
+    await sendTelegramNotification(errorMessage, true);
+
     process.exit(1);
   }
 }
