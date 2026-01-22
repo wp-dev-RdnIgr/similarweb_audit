@@ -476,11 +476,8 @@
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=807869987"
         },
         "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "queue_id": "={{ $json.queue_id }}",
-            "status": "processing"
-          },
+          "mappingMode": "autoMapInputData",
+          "value": {},
           "matchingColumns": [
             "queue_id"
           ],
@@ -489,40 +486,10 @@
               "id": "queue_id",
               "displayName": "queue_id",
               "required": false,
-              "defaultMatch": false,
+              "defaultMatch": true,
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
-            },
-            {
-              "id": "client_site",
-              "displayName": "client_site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "sites_list",
-              "displayName": "sites_list",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "period",
-              "displayName": "period",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
             },
             {
               "id": "status",
@@ -532,61 +499,8 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
-            },
-            {
-              "id": "priority",
-              "displayName": "priority",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "created_at",
-              "displayName": "created_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "task_id",
-              "displayName": "task_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "error_message",
-              "displayName": "error_message",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "row_number",
-              "displayName": "row_number",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "canBeUsedToMatch": true,
-              "readOnly": true,
-              "removed": true
             }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
+          ]
         },
         "options": {}
       },
@@ -707,7 +621,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Проверяем статус задачи и направляем на обработку или логирование ошибки\nconst input = $input.first().json;\n\nconst taskStatus = input.body?.task?.status || input.status;\nconst taskId = input.body?.task?.id || 'unknown';\nconst finishedAt = input.body?.task?.finishedAt;\nconst robotId = input.body?.robot?.id || 'unknown';\nconst originUrl = input.body?.task?.inputParameters?.originUrl || '';\n\n// Определяем тип робота\nconst isPerformance = originUrl.includes('website-performance');\nconst robotType = isPerformance ? 'Performance' : 'AI Traffic';\n\n// Извлекаем информацию из URL\nconst keyMatch = originUrl.match(/key=([^&]+)/);\nlet sites = [];\nif (keyMatch) {\n  sites = decodeURIComponent(keyMatch[1]).split(',');\n}\n\nconst periodMatch = originUrl.match(/\\/804\\/(\\d{4}\\.\\d{2})-/);\nconst period = periodMatch ? periodMatch[1] : 'unknown';\n\n// Проверяем успешность\nconst isSuccess = (taskStatus === 'successful' || taskStatus === 'completed') && finishedAt;\n\nif (!isSuccess) {\n  // Задача провалилась - логируем ошибку\n  return [{\n    json: {\n      isError: true,\n      taskId,\n      taskStatus,\n      robotType,\n      robotId,\n      period,\n      sites: sites.join(','),\n      originUrl,\n      errorMessage: input.body?.task?.failedReason || 'Unknown error',\n      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),\n      rawResponse: JSON.stringify(input.body || input).substring(0, 1000)\n    }\n  }];\n}\n\n// Задача успешна - передаём на обработку\nreturn [{\n  json: {\n    isError: false,\n    taskId,\n    taskStatus,\n    robotType,\n    period,\n    sites,\n    originUrl,\n    body: input.body\n  }\n}];"
+        "jsCode": "// Проверяем статус задачи и направляем на обработку или логирование ошибки\nconst input = $input.first().json;\n\nconst taskStatus = input.body?.task?.status || input.status;\nconst taskId = input.body?.task?.id || 'unknown';\nconst finishedAt = input.body?.task?.finishedAt;\nconst robotId = input.body?.robot?.id || 'unknown';\nconst originUrl = input.body?.task?.inputParameters?.originUrl || '';\n\n// Определяем тип робота\nconst isPerformance = originUrl.includes('website-performance');\nconst robotType = isPerformance ? 'Performance' : 'AI Traffic';\n\n// Извлекаем информацию из URL\nconst keyMatch = originUrl.match(/key=([^&]+)/);\nlet sites = [];\nif (keyMatch) {\n  sites = decodeURIComponent(keyMatch[1]).split(',');\n}\n\nconst periodMatch = originUrl.match(/\\/804\\/(\\d{4}\\.\\d{2})-/);\nconst period = periodMatch ? periodMatch[1] : 'unknown';\n\n// Проверяем успешность\nconst isSuccess = (taskStatus === 'successful' || taskStatus === 'completed') && finishedAt;\n\nif (!isSuccess) {\n  // Задача провалилась - логируем ошибку\n  // Поля соответствуют колонкам в таблице \"Логи ошибок\"\n  return [{\n    json: {\n      isError: true,\n      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),\n      task_id: taskId,\n      robot_type: robotType,\n      period: period,\n      sites: sites.join(','),\n      status: taskStatus || 'failed',\n      error_message: input.body?.task?.failedReason || 'Unknown error',\n      url: originUrl,\n      // Дополнительные поля для обработки\n      taskId,\n      taskStatus,\n      robotType,\n      originUrl\n    }\n  }];\n}\n\n// Задача успешна - передаём на обработку\nreturn [{\n  json: {\n    isError: false,\n    taskId,\n    taskStatus,\n    robotType,\n    period,\n    sites,\n    originUrl,\n    body: input.body\n  }\n}];"
       },
       "id": "2b040f47-f893-4c96-bcf8-1ddcc5f90364",
       "name": "Проверка статуса задачи",
@@ -769,17 +683,8 @@
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=1263404191"
         },
         "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "timestamp": "={{ $json.timestamp }}",
-            "task_id": "={{ $json.taskId }}",
-            "robot_type": "={{ $json.robotType }}",
-            "period": "={{ $json.period }}",
-            "sites": "={{ $json.sites }}",
-            "status": "={{ $json.taskStatus }}",
-            "error_message": "={{ $json.errorMessage }}",
-            "url": "={{ $json.originUrl }}"
-          },
+          "mappingMode": "autoMapInputData",
+          "value": {},
           "matchingColumns": [],
           "schema": [
             {
@@ -854,9 +759,7 @@
               "type": "string",
               "canBeUsedToMatch": true
             }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
+          ]
         },
         "options": {}
       },
@@ -1262,12 +1165,8 @@
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU/edit#gid=807869987"
         },
         "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "queue_id": "={{ $json.queue_id }}",
-            "status": "done",
-            "task_id": "={{ $json.task_id }}"
-          },
+          "mappingMode": "autoMapInputData",
+          "value": {},
           "matchingColumns": [
             "queue_id"
           ],
@@ -1276,41 +1175,10 @@
               "id": "queue_id",
               "displayName": "queue_id",
               "required": false,
-              "defaultMatch": false,
+              "defaultMatch": true,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "client_site",
-              "displayName": "client_site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "sites_list",
-              "displayName": "sites_list",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "period",
-              "displayName": "period",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
+              "canBeUsedToMatch": true
             },
             {
               "id": "status",
@@ -1322,26 +1190,6 @@
               "canBeUsedToMatch": true
             },
             {
-              "id": "priority",
-              "displayName": "priority",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "created_at",
-              "displayName": "created_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
               "id": "task_id",
               "displayName": "task_id",
               "required": false,
@@ -1349,31 +1197,8 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
-            },
-            {
-              "id": "error_message",
-              "displayName": "error_message",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "row_number",
-              "displayName": "row_number",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "canBeUsedToMatch": true,
-              "readOnly": true,
-              "removed": true
             }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
+          ]
         },
         "options": {}
       },
@@ -1581,7 +1406,7 @@
     {
       "parameters": {
         "method": "PUT",
-        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Создаём таблицу клиента').item.json.id }}/values/Данные!A1:O1?valueInputOption=USER_ENTERED",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $(\"Создаём таблицу клиента\").item.json.id }}/values/Данные!A1:T1?valueInputOption=USER_ENTERED",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleSheetsOAuth2Api",
         "sendBody": true,
