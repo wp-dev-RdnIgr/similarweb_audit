@@ -1192,7 +1192,7 @@
         "nodeCredentialType": "googleSheetsOAuth2Api",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"values\": [[\n    \"{{ $json.date }}\",\n    \"{{ $json.period }}\",\n    \"{{ $json.client_site }}\",\n    \"{{ $json.competitors_site }}\",\n    \"{{ $json.type }}\",\n    \"{{ $json['Total Visit'] }}\",\n    \"{{ $json.Direct }}\",\n    \"{{ $json['Organic Search'] }}\",\n    \"{{ $json['Paid Search'] }}\",\n    \"{{ $json['Display Ads'] }}\",\n    \"{{ $json.Social }}\",\n    \"{{ $json.Email }}\",\n    \"{{ $json['AI Traffic'] }}\",\n    \"{{ $json['Task ID'] }}\",\n    \"{{ $json.key }}\"\n  ]]\n}"
+        "jsonBody": "={\n  \"values\": [[\n    \"{{ $json.date }}\",\n    \"{{ $json.period }}\",\n    \"{{ $json.client_site }}\",\n    \"{{ $json.site }}\",\n    \"{{ $json.type }}\",\n    \"{{ $json['Monthly Visits'] }}\",\n    \"{{ $json['Unique Visitors'] }}\",\n    \"{{ $json['Visit Duration'] }}\",\n    \"{{ $json['Pages/Visit'] }}\",\n    \"{{ $json['Bounce Rate'] }}\",\n    \"{{ $json.Direct }}\",\n    \"{{ $json['Organic Search'] }}\",\n    \"{{ $json['Paid Search'] }}\",\n    \"{{ $json['Display Ads'] }}\",\n    \"{{ $json.Social }}\",\n    \"{{ $json.Email }}\",\n    \"{{ $json['Task ID'] }}\",\n    \"{{ $json['Queue ID'] }}\",\n    \"{{ $json.key }}\"\n  ]]\n}"
       },
       "id": "jj000000-0000-0000-0000-000000000004",
       "name": "Пишем в таблицу клиента",
