@@ -42,7 +42,7 @@ git push -u origin main
 | `SIMILARWEB_EMAIL` | `fl.mykyta.l@web-promo.com.ua` |
 | `SIMILARWEB_PASSWORD` | `k3de-Ress-m3So-TepZ-cm99-Kjf3` |
 | `BROWSE_AI_API_KEY` | `c8d94bb5-9cb7-466a-94dc-e3c21cbfe797:89e5dc61-e88d-456e-abf1-40d7b3993778` |
-| `BROWSE_AI_ROBOT_ID` | `019b7e18-760a-73cf-8d7c-237ef5fa0d2a` |
+| `BROWSE_AI_ROBOT_ID` | `019be626-b575-7d4b-a848-beee91c6d7aa` |
 | `TELEGRAM_BOT_TOKEN` | `8472185729:AAF3XLXBHftkDxQfqA6yNSVgP5KaawR62cY` |
 | `TELEGRAM_CHAT_ID` | `-1003503638426` |
 
