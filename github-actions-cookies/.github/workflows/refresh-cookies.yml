@@ -1,0 +1,43 @@
+name: Refresh SimilarWeb Cookies
+
+on:
+  # Run daily at 06:00 UTC (09:00 Kyiv time)
+  schedule:
+    - cron: '0 6 * * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  refresh-cookies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Puppeteer browser
+        run: npx puppeteer browsers install chrome
+
+      - name: Run cookie refresh script
+        env:
+          SIMILARWEB_EMAIL: ${{ secrets.SIMILARWEB_EMAIL }}
+          SIMILARWEB_PASSWORD: ${{ secrets.SIMILARWEB_PASSWORD }}
+          BROWSE_AI_API_KEY: ${{ secrets.BROWSE_AI_API_KEY }}
+          BROWSE_AI_ROBOT_ID: ${{ secrets.BROWSE_AI_ROBOT_ID }}
+        run: npm run refresh
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Cookie refresh failed! Check the logs above."
+          # You can add Telegram/Slack notification here
