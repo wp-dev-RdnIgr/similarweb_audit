@@ -1,0 +1,70 @@
+name: Refresh SimilarWeb Cookies
+
+on:
+  # Run daily at 06:00 UTC (09:00 Kyiv time)
+  # Script will check if 13 days have passed since last run
+  schedule:
+    - cron: '0 6 * * *'
+
+  # Allow manual trigger (always runs, ignores 13-day check)
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run regardless of schedule'
+        required: false
+        default: 'true'
+
+jobs:
+  refresh-cookies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check if should run (every 13 days)
+        id: check_schedule
+        run: |
+          # For manual trigger, always run
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "Manual trigger - will run"
+            exit 0
+          fi
+
+          # Calculate day of year
+          DAY_OF_YEAR=$(date +%j)
+          # Run if day_of_year % 13 == 0 (approximately every 13 days)
+          if [ $((DAY_OF_YEAR % 13)) -eq 0 ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "Day $DAY_OF_YEAR - time to refresh cookies!"
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "Day $DAY_OF_YEAR - skipping (not a 13-day interval)"
+          fi
+
+      - name: Setup Node.js
+        if: steps.check_schedule.outputs.should_run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.check_schedule.outputs.should_run == 'true'
+        run: npm ci
+
+      - name: Install Puppeteer browser
+        if: steps.check_schedule.outputs.should_run == 'true'
+        run: npx puppeteer browsers install chrome
+
+      - name: Run cookie refresh script
+        if: steps.check_schedule.outputs.should_run == 'true'
+        env:
+          SIMILARWEB_EMAIL: ${{ secrets.SIMILARWEB_EMAIL }}
+          SIMILARWEB_PASSWORD: ${{ secrets.SIMILARWEB_PASSWORD }}
+          BROWSE_AI_API_KEY: ${{ secrets.BROWSE_AI_API_KEY }}
+          BROWSE_AI_ROBOT_ID: ${{ secrets.BROWSE_AI_ROBOT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: npm run refresh
