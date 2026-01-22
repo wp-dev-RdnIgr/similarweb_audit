@@ -1406,7 +1406,7 @@
     {
       "parameters": {
         "method": "PUT",
-        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Создаём таблицу клиента').item.json.id }}/values/Данные!A1:O1?valueInputOption=USER_ENTERED",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $(\"Создаём таблицу клиента\").item.json.id }}/values/Данные!A1:T1?valueInputOption=USER_ENTERED",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleSheetsOAuth2Api",
         "sendBody": true,
