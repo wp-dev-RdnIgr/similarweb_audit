@@ -908,243 +908,6 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $json._spreadsheet_id }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Данные",
-          "mode": "name"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "date": "={{ $json.date }}",
-            "period": "={{ $json.period }}",
-            "client_site": "={{ $json.client_site }}",
-            "site": "={{ $json.site }}",
-            "type": "={{ $json.type }}",
-            "Monthly Visits": "={{ $json['Monthly Visits'] }}",
-            "Unique Visitors": "={{ $json['Unique Visitors'] }}",
-            "Visit Duration": "={{ $json['Visit Duration'] }}",
-            "Pages/Visit": "={{ $json['Pages/Visit'] }}",
-            "Bounce Rate": "={{ $json['Bounce Rate'] }}",
-            "Direct": "={{ $json.Direct }}",
-            "Organic Search": "={{ $json['Organic Search'] }}",
-            "Paid Search": "={{ $json['Paid Search'] }}",
-            "Display Ads": "={{ $json['Display Ads'] }}",
-            "Social": "={{ $json.Social }}",
-            "Email": "={{ $json.Email }}",
-            "AI Traffic": "",
-            "Task ID": "={{ $json['Task ID'] }}",
-            "Queue ID": "={{ $json['Queue ID'] }}",
-            "key": "={{ $json.key }}"
-          },
-          "schema": [
-            {
-              "id": "date",
-              "displayName": "date",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "period",
-              "displayName": "period",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "client_site",
-              "displayName": "client_site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "site",
-              "displayName": "site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "type",
-              "displayName": "type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Monthly Visits",
-              "displayName": "Monthly Visits",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Unique Visitors",
-              "displayName": "Unique Visitors",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Visit Duration",
-              "displayName": "Visit Duration",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Pages/Visit",
-              "displayName": "Pages/Visit",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Bounce Rate",
-              "displayName": "Bounce Rate",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Direct",
-              "displayName": "Direct",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Organic Search",
-              "displayName": "Organic Search",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Paid Search",
-              "displayName": "Paid Search",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Display Ads",
-              "displayName": "Display Ads",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Social",
-              "displayName": "Social",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Email",
-              "displayName": "Email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "AI Traffic",
-              "displayName": "AI Traffic",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Task ID",
-              "displayName": "Task ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Queue ID",
-              "displayName": "Queue ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "key",
-              "displayName": "key",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "jj000000-0000-0000-0000-000000000004",
-      "name": "Пишем в таблицу клиента",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        1792,
-        1320
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "hMp9ISVYVcdpImYl",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "// Обновляем статус в очереди после успешного сохранения\nconst performanceData = $('Parse Performance Data').first().json;\nconst originUrl = $('Проверка статуса задачи').first().json.originUrl || '';\n\n// Извлекаем queue_id из URL\nconst qidMatch = originUrl.match(/qid=([^&]+)/);\nconst queueId = qidMatch ? decodeURIComponent(qidMatch[1]) : '';\n\nconst now = new Date().toISOString().replace('T', ' ').substring(0, 19);\n\nreturn [{\n  json: {\n    queue_id: queueId,\n    status: 'done',\n    task_id: performanceData.taskId\n  }\n}];"
       },
       "id": "c792cf9c-2878-4b26-8ccb-5ebf399da95a",
@@ -1296,243 +1059,6 @@
         1360,
         1328
       ]
-    },
-    {
-      "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $json._spreadsheet_id }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Данные",
-          "mode": "name"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "date": "={{ $json.date }}",
-            "period": "={{ $json.period }}",
-            "client_site": "={{ $json.client_site }}",
-            "site": "={{ $json.site }}",
-            "type": "={{ $json.type }}",
-            "Monthly Visits": "={{ $json['Monthly Visits'] }}",
-            "Unique Visitors": "={{ $json['Unique Visitors'] }}",
-            "Visit Duration": "={{ $json['Visit Duration'] }}",
-            "Pages/Visit": "={{ $json['Pages/Visit'] }}",
-            "Bounce Rate": "={{ $json['Bounce Rate'] }}",
-            "Direct": "={{ $json.Direct }}",
-            "Organic Search": "={{ $json['Organic Search'] }}",
-            "Paid Search": "={{ $json['Paid Search'] }}",
-            "Display Ads": "={{ $json['Display Ads'] }}",
-            "Social": "={{ $json.Social }}",
-            "Email": "={{ $json.Email }}",
-            "AI Traffic": "={{ $json['AI Traffic'] }}",
-            "Task ID": "={{ $json['Task ID'] }}",
-            "Queue ID": "={{ $json['Queue ID'] }}",
-            "key": "={{ $json.key }}"
-          },
-          "schema": [
-            {
-              "id": "date",
-              "displayName": "date",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "period",
-              "displayName": "period",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "client_site",
-              "displayName": "client_site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "site",
-              "displayName": "site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "type",
-              "displayName": "type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Monthly Visits",
-              "displayName": "Monthly Visits",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Unique Visitors",
-              "displayName": "Unique Visitors",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Visit Duration",
-              "displayName": "Visit Duration",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Pages/Visit",
-              "displayName": "Pages/Visit",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Bounce Rate",
-              "displayName": "Bounce Rate",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Direct",
-              "displayName": "Direct",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Organic Search",
-              "displayName": "Organic Search",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Paid Search",
-              "displayName": "Paid Search",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Display Ads",
-              "displayName": "Display Ads",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Social",
-              "displayName": "Social",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Email",
-              "displayName": "Email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "AI Traffic",
-              "displayName": "AI Traffic",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Task ID",
-              "displayName": "Task ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Queue ID",
-              "displayName": "Queue ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "key",
-              "displayName": "key",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "kk000000-0000-0000-0000-000000000008",
-      "name": "Пишем AI в таблицу клиента",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        1584,
-        1328
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "hMp9ISVYVcdpImYl",
-          "name": "Google Sheets account"
-        }
-      }
     },
     {
       "parameters": {
@@ -1971,6 +1497,292 @@
           "name": "I.Redin - ws tg log"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json._spreadsheet_id }}/values/Данные!A:T",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "id": "f2c4a852-d64a-404c-bb32-f37ab79add75",
+      "name": "Читаем таблицу для upsert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1792,
+        1320
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Upsert логика: найти строку по period+site и обновить, или добавить новую\nconst inputData = $('Есть данные клиента?').all();\nconst sheetResponse = $input.first().json;\nconst sheetValues = sheetResponse.values || [];\n\n// Получаем spreadsheet_id из первого item\nconst spreadsheetId = inputData[0]?.json._spreadsheet_id;\n\n// Создаём индекс существующих строк: \"period_site\" -> rowIndex\nconst existingRows = new Map();\nfor (let i = 1; i < sheetValues.length; i++) { // Skip header row\n  const row = sheetValues[i];\n  const period = row[1] || ''; // Column B = period\n  const site = row[3] || '';   // Column D = site\n  const key = `${period}_${site}`;\n  existingRows.set(key, {\n    rowIndex: i + 1, // 1-based for Sheets API\n    rowData: row\n  });\n}\n\nconst results = [];\n\nfor (const item of inputData) {\n  const row = item.json;\n  const key = `${row.period}_${row.site}`;\n  const existing = existingRows.get(key);\n  \n  // Подготавливаем данные строки\n  const newRowData = [\n    row.date || '',\n    row.period || '',\n    row.client_site || '',\n    row.site || '',\n    row.type || '',\n    row['Monthly Visits'] || '',\n    row['Unique Visitors'] || '',\n    row['Visit Duration'] || '',\n    row['Pages/Visit'] || '',\n    row['Bounce Rate'] || '',\n    row.Direct || '',\n    row['Organic Search'] || '',\n    row['Paid Search'] || '',\n    row['Display Ads'] || '',\n    row.Social || '',\n    row.Email || '',\n    row['AI Traffic'] || '',\n    row['Task ID'] || '',\n    row['Queue ID'] || '',\n    row.key || ''\n  ];\n  \n  if (existing) {\n    // Merge: сохраняем существующие данные где новые пустые\n    const mergedData = newRowData.map((newVal, idx) => {\n      if (newVal === '' && existing.rowData[idx]) {\n        return existing.rowData[idx];\n      }\n      return newVal;\n    });\n    \n    results.push({\n      json: {\n        action: 'update',\n        spreadsheetId,\n        rowIndex: existing.rowIndex,\n        range: `Данные!A${existing.rowIndex}:T${existing.rowIndex}`,\n        values: [mergedData]\n      }\n    });\n  } else {\n    results.push({\n      json: {\n        action: 'append',\n        spreadsheetId,\n        values: [newRowData]\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "id": "9acd6c9c-77c5-4934-b8e3-626d999a9832",
+      "name": "Upsert логика Performance",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-update",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "update",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e2b2a1d6-3223-433f-ab03-ae8a4ab222cc",
+      "name": "Update или Append?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}/values/{{ $json.range }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "options": {}
+      },
+      "id": "e505aa2f-81b6-4b88-9b17-0e74dbd62804",
+      "name": "Update строку",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2464,
+        1220
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}/values/Данные!A:T:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "options": {}
+      },
+      "id": "9854fd20-fcf4-4b47-a1f6-02bde5e3a1ab",
+      "name": "Append строку",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2464,
+        1420
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json._spreadsheet_id }}/values/Данные!A:T",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "id": "8b1a2504-799d-491e-b909-2c37de3b5870",
+      "name": "Читаем таблицу для AI upsert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1584,
+        1328
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Upsert логика AI Traffic: найти строку по period+site и обновить AI Traffic\nconst inputData = $('Есть AI данные клиента?').all();\nconst sheetResponse = $input.first().json;\nconst sheetValues = sheetResponse.values || [];\n\nconst spreadsheetId = inputData[0]?.json._spreadsheet_id;\n\n// Создаём индекс существующих строк\nconst existingRows = new Map();\nfor (let i = 1; i < sheetValues.length; i++) {\n  const row = sheetValues[i];\n  const period = row[1] || '';\n  const site = row[3] || '';\n  const key = `${period}_${site}`;\n  existingRows.set(key, {\n    rowIndex: i + 1,\n    rowData: row\n  });\n}\n\nconst results = [];\n\nfor (const item of inputData) {\n  const row = item.json;\n  const key = `${row.period}_${row.site}`;\n  const existing = existingRows.get(key);\n  \n  const newRowData = [\n    row.date || '',\n    row.period || '',\n    row.client_site || '',\n    row.site || '',\n    row.type || '',\n    row['Monthly Visits'] || '',\n    row['Unique Visitors'] || '',\n    row['Visit Duration'] || '',\n    row['Pages/Visit'] || '',\n    row['Bounce Rate'] || '',\n    row.Direct || '',\n    row['Organic Search'] || '',\n    row['Paid Search'] || '',\n    row['Display Ads'] || '',\n    row.Social || '',\n    row.Email || '',\n    row['AI Traffic'] || '',\n    row['Task ID'] || '',\n    row['Queue ID'] || '',\n    row.key || ''\n  ];\n  \n  if (existing) {\n    const mergedData = newRowData.map((newVal, idx) => {\n      if (newVal === '' && existing.rowData[idx]) {\n        return existing.rowData[idx];\n      }\n      return newVal;\n    });\n    \n    results.push({\n      json: {\n        action: 'update',\n        spreadsheetId,\n        rowIndex: existing.rowIndex,\n        range: `Данные!A${existing.rowIndex}:T${existing.rowIndex}`,\n        values: [mergedData]\n      }\n    });\n  } else {\n    results.push({\n      json: {\n        action: 'append',\n        spreadsheetId,\n        values: [newRowData]\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "id": "4abe4c03-051d-4d39-a4a9-0bc2cda97491",
+      "name": "Upsert логика AI Traffic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-update-ai",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "update",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d0694be2-d6c5-4b21-8c88-e8a30c08c9f0",
+      "name": "AI Update или Append?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2032,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}/values/{{ $json.range }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "options": {}
+      },
+      "id": "5c2d5b5d-fb95-459e-9d37-52d53983de95",
+      "name": "AI Update строку",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2256,
+        1228
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}/values/Данные!A:T:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "options": {}
+      },
+      "id": "66444218-3c1a-40f3-8531-d633568eb1b6",
+      "name": "AI Append строку",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2256,
+        1428
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -2286,12 +2098,11 @@
       "main": [
         [
           {
-            "node": "Пишем в таблицу клиента",
+            "node": "Читаем таблицу для upsert",
             "type": "main",
             "index": 0
           }
-        ],
-        []
+        ]
       ]
     },
     "Format Performance Report": {
@@ -2369,12 +2180,11 @@
       "main": [
         [
           {
-            "node": "Пишем AI в таблицу клиента",
+            "node": "Читаем таблицу для AI upsert",
             "type": "main",
             "index": 0
           }
-        ],
-        []
+        ]
       ]
     },
     "Format AI Traffic Report": {
@@ -2504,6 +2314,86 @@
         [
           {
             "node": "Telegram: Новый клиент",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем таблицу для upsert": {
+      "main": [
+        [
+          {
+            "node": "Upsert логика Performance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert логика Performance": {
+      "main": [
+        [
+          {
+            "node": "Update или Append?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update или Append?": {
+      "main": [
+        [
+          {
+            "node": "Update строку",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append строку",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем таблицу для AI upsert": {
+      "main": [
+        [
+          {
+            "node": "Upsert логика AI Traffic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert логика AI Traffic": {
+      "main": [
+        [
+          {
+            "node": "AI Update или Append?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Update или Append?": {
+      "main": [
+        [
+          {
+            "node": "AI Update строку",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Append строку",
             "type": "main",
             "index": 0
           }
