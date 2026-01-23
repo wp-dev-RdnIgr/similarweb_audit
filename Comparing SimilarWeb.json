@@ -1126,7 +1126,8 @@
             }
           ],
           "matchingColumns": [
-            "key"
+            "period",
+            "site"
           ]
         },
         "options": {}
@@ -1520,7 +1521,8 @@
             }
           ],
           "matchingColumns": [
-            "key"
+            "period",
+            "site"
           ]
         },
         "options": {}
