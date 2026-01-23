@@ -433,7 +433,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Формируем URL для запуска робота\n// Используем формат как в работающем workflow с {{sites}} плейсхолдером\nconst input = $input.first().json;\n\nconst sites = input.sites_list.split(\",\");\n\n// Проверка на лимит сайтов\nif (sites.length > 5) {\n  console.warn(`WARNING: Too many sites (${sites.length}), truncating to 5`);\n  sites.length = 5;\n}\n\n// Формируем sites для передачи в Browse.ai\nconst sitesParam = sites.map(s => s.trim()).join(\",\");\n\n// queue_id для отслеживания\nconst queueId = input.queue_id;\n\n// URL с плейсхолдером {{sites}} - Browse.ai подставит значение\nconst performanceUrl = \"https://pro.similarweb.com/#/digitalsuite/websiteanalysis/overview/website-performance/*/804/12m?webSource=Total&key={{sites}}\";\nconst aiTrafficUrl = \"https://pro.similarweb.com/#/digitalsuite/ai-traffic/overview/*/804/12m?webSource=Total&key={{sites}}\";\n\nreturn [{\n  json: {\n    ...input,\n    performanceUrl,\n    aiTrafficUrl,\n    sites: sitesParam,\n    sitesCount: sites.length,\n    queueId\n  }\n}];"
+        "jsCode": "// Формируем URL для запуска робота v2\n// Сайты подставляются напрямую в URL (Browse.ai не подставляет плейсхолдеры)\nconst input = $input.first().json;\n\nconst sites = input.sites_list.split(\",\");\n\n// Проверка на лимит сайтов\nif (sites.length > 5) {\n  console.warn(`WARNING: Too many sites (${sites.length}), truncating to 5`);\n  sites.length = 5;\n}\n\n// Формируем sites для URL\nconst sitesParam = sites.map(s => s.trim()).join(\",\");\n\n// queue_id для отслеживания\nconst queueId = input.queue_id;\n\n// URL с подставленными сайтами и queueId для отслеживания\nconst performanceUrl = `https://pro.similarweb.com/#/digitalsuite/websiteanalysis/overview/website-performance/*/804/12m?webSource=Total&key=${sitesParam}&qid=${queueId}`;\nconst aiTrafficUrl = `https://pro.similarweb.com/#/digitalsuite/ai-traffic/overview/*/804/12m?webSource=Total&key=${sitesParam}&qid=${queueId}`;\n\nreturn [{\n  json: {\n    ...input,\n    performanceUrl,\n    aiTrafficUrl,\n    sites: sitesParam,\n    sitesCount: sites.length,\n    queueId\n  }\n}];"
       },
       "id": "d4b2714a-4e2a-4eae-99f2-b22ff0ae5bcc",
       "name": "Подготовка URL",
@@ -527,7 +527,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $json.performanceUrl }}\",\n    \"sites\": \"{{ $json.sites }}\"\n  }\n}",
+        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $json.performanceUrl }}\"\n  }\n}",
         "options": {}
       },
       "id": "4db97b36-3834-411e-b072-fb871d93b1fb",
@@ -567,7 +567,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $json.aiTrafficUrl }}\",\n    \"sites\": \"{{ $json.sites }}\"\n  }\n}",
+        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $json.aiTrafficUrl }}\"\n  }\n}",
         "options": {}
       },
       "id": "482e9e1c-93f9-4a33-a206-dbc01ece6e49",
