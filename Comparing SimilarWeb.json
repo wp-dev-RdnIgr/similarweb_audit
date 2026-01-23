@@ -567,7 +567,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $json.aiTrafficUrl }}\"\n  }\n}",
+        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $('Подготовка URL').first().json.aiTrafficUrl }}\"\n  }\n}",
         "options": {}
       },
       "id": "482e9e1c-93f9-4a33-a206-dbc01ece6e49",
