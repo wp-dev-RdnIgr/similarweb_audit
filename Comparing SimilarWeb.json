@@ -908,230 +908,32 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $json._spreadsheet_id }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Данные",
-          "mode": "name"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "date": "={{ $json.date }}",
-            "period": "={{ $json.period }}",
-            "client_site": "={{ $json.client_site }}",
-            "site": "={{ $json.site }}",
-            "type": "={{ $json.type }}",
-            "Monthly Visits": "={{ $json['Monthly Visits'] }}",
-            "Unique Visitors": "={{ $json['Unique Visitors'] }}",
-            "Visit Duration": "={{ $json['Visit Duration'] }}",
-            "Pages/Visit": "={{ $json['Pages/Visit'] }}",
-            "Bounce Rate": "={{ $json['Bounce Rate'] }}",
-            "Direct": "={{ $json.Direct }}",
-            "Organic Search": "={{ $json['Organic Search'] }}",
-            "Paid Search": "={{ $json['Paid Search'] }}",
-            "Display Ads": "={{ $json['Display Ads'] }}",
-            "Social": "={{ $json.Social }}",
-            "Email": "={{ $json.Email }}",
-            "AI Traffic": "",
-            "Task ID": "={{ $json['Task ID'] }}",
-            "Queue ID": "={{ $json['Queue ID'] }}",
-            "key": "={{ $json.key }}"
-          },
-          "schema": [
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json._spreadsheet_id }}/values/Данные!A:T:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
             {
-              "id": "date",
-              "displayName": "date",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
             },
             {
-              "id": "period",
-              "displayName": "period",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "client_site",
-              "displayName": "client_site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "site",
-              "displayName": "site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "type",
-              "displayName": "type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Monthly Visits",
-              "displayName": "Monthly Visits",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Unique Visitors",
-              "displayName": "Unique Visitors",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Visit Duration",
-              "displayName": "Visit Duration",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Pages/Visit",
-              "displayName": "Pages/Visit",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Bounce Rate",
-              "displayName": "Bounce Rate",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Direct",
-              "displayName": "Direct",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Organic Search",
-              "displayName": "Organic Search",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Paid Search",
-              "displayName": "Paid Search",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Display Ads",
-              "displayName": "Display Ads",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Social",
-              "displayName": "Social",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Email",
-              "displayName": "Email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "AI Traffic",
-              "displayName": "AI Traffic",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Task ID",
-              "displayName": "Task ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Queue ID",
-              "displayName": "Queue ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "key",
-              "displayName": "key",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
             }
           ]
         },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [[ $json.date, $json.period, $json.client_site, $json.site, $json.type, $json['Monthly Visits'], $json['Unique Visitors'], $json['Visit Duration'], $json['Pages/Visit'], $json['Bounce Rate'], $json.Direct, $json['Organic Search'], $json['Paid Search'], $json['Display Ads'], $json.Social, $json.Email, $json['AI Traffic'], $json['Task ID'], $json['Queue ID'], $json.key ]] }) }}",
         "options": {}
       },
       "id": "jj000000-0000-0000-0000-000000000004",
       "name": "Пишем в таблицу клиента",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1792,
         1320
@@ -1299,230 +1101,32 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $json._spreadsheet_id }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Данные",
-          "mode": "name"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "date": "={{ $json.date }}",
-            "period": "={{ $json.period }}",
-            "client_site": "={{ $json.client_site }}",
-            "site": "={{ $json.site }}",
-            "type": "={{ $json.type }}",
-            "Monthly Visits": "={{ $json['Monthly Visits'] }}",
-            "Unique Visitors": "={{ $json['Unique Visitors'] }}",
-            "Visit Duration": "={{ $json['Visit Duration'] }}",
-            "Pages/Visit": "={{ $json['Pages/Visit'] }}",
-            "Bounce Rate": "={{ $json['Bounce Rate'] }}",
-            "Direct": "={{ $json.Direct }}",
-            "Organic Search": "={{ $json['Organic Search'] }}",
-            "Paid Search": "={{ $json['Paid Search'] }}",
-            "Display Ads": "={{ $json['Display Ads'] }}",
-            "Social": "={{ $json.Social }}",
-            "Email": "={{ $json.Email }}",
-            "AI Traffic": "={{ $json['AI Traffic'] }}",
-            "Task ID": "={{ $json['Task ID'] }}",
-            "Queue ID": "={{ $json['Queue ID'] }}",
-            "key": "={{ $json.key }}"
-          },
-          "schema": [
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json._spreadsheet_id }}/values/Данные!A:T:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
             {
-              "id": "date",
-              "displayName": "date",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
             },
             {
-              "id": "period",
-              "displayName": "period",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "client_site",
-              "displayName": "client_site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "site",
-              "displayName": "site",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "type",
-              "displayName": "type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Monthly Visits",
-              "displayName": "Monthly Visits",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Unique Visitors",
-              "displayName": "Unique Visitors",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Visit Duration",
-              "displayName": "Visit Duration",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Pages/Visit",
-              "displayName": "Pages/Visit",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Bounce Rate",
-              "displayName": "Bounce Rate",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Direct",
-              "displayName": "Direct",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Organic Search",
-              "displayName": "Organic Search",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Paid Search",
-              "displayName": "Paid Search",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Display Ads",
-              "displayName": "Display Ads",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Social",
-              "displayName": "Social",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Email",
-              "displayName": "Email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "AI Traffic",
-              "displayName": "AI Traffic",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Task ID",
-              "displayName": "Task ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Queue ID",
-              "displayName": "Queue ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "key",
-              "displayName": "key",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
             }
           ]
         },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [[ $json.date, $json.period, $json.client_site, $json.site, $json.type, $json['Monthly Visits'], $json['Unique Visitors'], $json['Visit Duration'], $json['Pages/Visit'], $json['Bounce Rate'], $json.Direct, $json['Organic Search'], $json['Paid Search'], $json['Display Ads'], $json.Social, $json.Email, $json['AI Traffic'], $json['Task ID'], $json['Queue ID'], $json.key ]] }) }}",
         "options": {}
       },
       "id": "kk000000-0000-0000-0000-000000000008",
       "name": "Пишем AI в таблицу клиента",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1584,
         1328
