@@ -527,7 +527,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $json.performanceUrl }}\"\n  }\n}",
+        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $('Подготовка URL').first().json.performanceUrl }}\"\n  }\n}",
         "options": {}
       },
       "id": "4db97b36-3834-411e-b072-fb871d93b1fb",
