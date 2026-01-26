@@ -400,7 +400,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Формируем URL для запуска робота v3\n// Сайты подставляются напрямую в URL (Browse.ai не подставляет плейсхолдеры)\n// v3: Используем конкретный месяц из period вместо 12m\nconst input = $input.first().json;\n\nconst sites = input.sites_list.split(\",\");\n\n// Проверка на лимит сайтов\nif (sites.length > 5) {\n  console.warn(`WARNING: Too many sites (${sites.length}), truncating to 5`);\n  sites.length = 5;\n}\n\n// Формируем sites для URL\nconst sitesParam = sites.map(s => s.trim()).join(\",\");\n\n// queue_id для отслеживания\nconst queueId = input.queue_id;\n\n// Период из очереди (формат: 2025.09)\nconst period = input.period;\n\n// URL с конкретным месяцем (period-period для одного месяца)\n// Формат SimilarWeb: /804/2025.09-2025.09 для данных за сентябрь 2025\nconst performanceUrl = `https://pro.similarweb.com/#/digitalsuite/websiteanalysis/overview/website-performance/*/804/${period}-${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\nconst aiTrafficUrl = `https://pro.similarweb.com/#/digitalsuite/ai-traffic/overview/*/804/${period}-${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\n\nreturn [{\n  json: {\n    ...input,\n    performanceUrl,\n    aiTrafficUrl,\n    sites: sitesParam,\n    sitesCount: sites.length,\n    period,\n    queueId\n  }\n}];"
+        "jsCode": "// Формируем URL для запуска роботов v4\n// v4: Добавлен Marketing Channels Robot\nconst input = $input.first().json;\n\nconst sites = input.sites_list.split(\",\");\n\nif (sites.length > 5) {\n  console.warn(`WARNING: Too many sites (${sites.length}), truncating to 5`);\n  sites.length = 5;\n}\n\nconst sitesParam = sites.map(s => s.trim()).join(\",\");\nconst queueId = input.queue_id;\nconst period = input.period;\n\n// URL для всех роботов (Performance и Marketing Channels используют одинаковый URL)\nconst performanceUrl = `https://pro.similarweb.com/#/digitalsuite/websiteanalysis/overview/website-performance/*/804/${period}-${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\nconst marketingChannelsUrl = `https://pro.similarweb.com/#/digitalsuite/websiteanalysis/overview/website-performance/*/804/${period}-${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\nconst aiTrafficUrl = `https://pro.similarweb.com/#/digitalsuite/ai-traffic/overview/*/804/${period}-${period}?webSource=Total&key=${sitesParam}&qid=${queueId}`;\n\nreturn [{\n  json: {\n    ...input,\n    performanceUrl,\n    marketingChannelsUrl,\n    aiTrafficUrl,\n    sites: sitesParam,\n    sitesCount: sites.length,\n    period,\n    queueId\n  }\n}];"
       },
       "id": "d4b2714a-4e2a-4eae-99f2-b22ff0ae5bcc",
       "name": "Подготовка URL",
@@ -529,6 +529,46 @@
     {
       "parameters": {
         "method": "POST",
+        "url": "https://api.browse.ai/v2/robots/019bfb8d-58f6-7a2e-9b44-04e1fcf9fc26/tasks",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"inputParameters\": {\n    \"originUrl\": \"{{ $('Подготовка URL').first().json.marketingChannelsUrl }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "mc-robot-0001-0001-0001-000000000001",
+      "name": "Запуск Marketing Channels Robot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        528
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4IkSClA1cWUZRGFP",
+          "name": "Browse AI 2.1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 40
+      },
+      "id": "mc-wait-0001-0001-0001-000000000001",
+      "name": "Ждём Marketing Channels",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2224,
+        528
+      ],
+      "webhookId": "mc-wait-webhook-id"
+    },
+    {
+      "parameters": {
+        "method": "POST",
         "url": "https://api.browse.ai/v2/robots/019be633-e05e-757a-aced-1cb415907f85/tasks",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
@@ -542,8 +582,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2000,
-        480
+        2448,
+        528
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -568,6 +608,306 @@
         928
       ],
       "webhookId": "browse-ai-performance"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "browse-ai-marketing-channels",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "mc-webhook-0001-0001-0001-00000001",
+      "name": "Webhook: Marketing Channels Results",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        16,
+        1728
+      ],
+      "webhookId": "browse-ai-marketing-channels"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Парсер Marketing Channels v1.0\n// Извлекает данные каналов: Direct, Organic Search, Paid Search, Display Ads, Social, Email\nconst input = $input.first().json;\n\nconst body = input.body || input;\nconst taskStatus = body?.task?.status || input.taskStatus;\n\nif (taskStatus !== 'successful' && taskStatus !== 'completed') {\n  return [{ json: { error: 'Task not successful', taskStatus, sheetsRows: [] } }];\n}\n\nconst rawData = body?.task?.capturedTexts || {};\nconst taskId = body?.task?.id || input.taskId || 'unknown';\nconst originUrl = body?.task?.inputParameters?.originUrl || input.originUrl || '';\n\nconst keyMatch = originUrl.match(/key=([^&]+)/);\nlet sitesFromUrl = [];\nif (keyMatch) {\n  sitesFromUrl = decodeURIComponent(keyMatch[1]).split(',');\n}\nconst clientSite = sitesFromUrl[0] || '';\n\nconst qidMatch = originUrl.match(/qid=([^&]+)/);\nconst queueId = qidMatch ? qidMatch[1] : '';\n\nlet periodFormatted = '';\nconst periodUrlMatch = originUrl.match(/\\/804\\/(\\d{4}\\.\\d{2})-\\d{4}\\.\\d{2}/);\nif (periodUrlMatch) {\n  periodFormatted = periodUrlMatch[1];\n}\nif (!periodFormatted && queueId) {\n  const queuePeriodMatch = queueId.match(/_(\\d{4}\\.\\d{2})_/);\n  if (queuePeriodMatch) {\n    periodFormatted = queuePeriodMatch[1];\n  }\n}\nif (!periodFormatted) {\n  const now = new Date();\n  periodFormatted = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`;\n}\n\nlet data = {};\nif (Array.isArray(rawData)) {\n  rawData.forEach(item => {\n    const key = item.name || item.key;\n    const value = item.newText || item.text || item.value;\n    if (key && value) data[key] = value;\n  });\n} else {\n  data = rawData;\n}\n\nfunction extractLegendData(html) {\n  if (!html) return {};\n  const sites = {};\n  const patterns = [\n    /data-automation-title=\"true\"[^>]*>([^<]+)<\\/label>[\\s\\S]*?data-automation-value=\"true\"[^>]*>([^<]+)<\\/label>/g,\n    /class=\"[^\"]*iUaIjL[^\"]*\">([^<]+)<\\/label>[\\s\\S]{0,300}?class=\"[^\"]*gzsEum[^\"]*\">([^<]+)<\\/label>/g\n  ];\n  patterns.forEach(pattern => {\n    let match;\n    while ((match = pattern.exec(html)) !== null) {\n      const site = match[1].trim();\n      const value = match[2].trim();\n      if (site && value && site.includes('.') && /^[a-zA-Z0-9]/.test(site)) {\n        if (!sites[site]) sites[site] = value;\n      }\n    }\n  });\n  return sites;\n}\n\nconst direct = extractLegendData(data['Direct']);\nconst organicSearch = extractLegendData(data['Organic Search']);\nconst paidSearch = extractLegendData(data['Paid Search']);\nconst displayAds = extractLegendData(data['Display Ads'] || data['Display Search']);\nconst social = extractLegendData(data['Social'] || data['Sosial']);\nconst email = extractLegendData(data['Email']);\n\nconst today = new Date().toISOString().split('T')[0];\n\nconst allSites = new Set();\n[direct, organicSearch, paidSearch, displayAds, social, email].forEach(channel => {\n  Object.keys(channel).forEach(site => allSites.add(site));\n});\nif (allSites.size === 0 && sitesFromUrl.length > 0) {\n  sitesFromUrl.forEach(site => allSites.add(site));\n}\n\nconst sitesArray = Array.from(allSites);\n\nconst sheetsRows = sitesArray.map((site) => ({\n  'date': today,\n  'period': periodFormatted,\n  'client_site': clientSite,\n  'site': site,\n  'type': site === clientSite ? 'client' : 'competitor',\n  'Monthly Visits': '',\n  'Unique Visitors': '',\n  'Visit Duration': '',\n  'Pages/Visit': '',\n  'Bounce Rate': '',\n  'Direct': direct[site] || '',\n  'Organic Search': organicSearch[site] || '',\n  'Paid Search': paidSearch[site] || '',\n  'Display Ads': displayAds[site] || '',\n  'Social': social[site] || '',\n  'Email': email[site] || '',\n  'AI Traffic': '',\n  'Task ID': taskId,\n  'Queue ID': queueId,\n  'key': `${periodFormatted}_${site}`\n}));\n\nreturn [{\n  json: {\n    taskId,\n    queueId,\n    type: 'marketing_channels',\n    periodFormatted,\n    clientSite,\n    channels: { direct, organicSearch, paidSearch, displayAds, social, email },\n    sheetsRows,\n    sitesCount: sitesArray.length,\n    raw: data\n  }\n}];\n"
+      },
+      "id": "mc-parser-0001-0001-0001-00000001",
+      "name": "Parse Marketing Channels Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        1728
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "sheetsRows",
+        "options": {}
+      },
+      "id": "mc-split-0001-0001-0001-00000001",
+      "name": "Split Out: Marketing Channels",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        464,
+        1728
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ftyhDQ0px7gI1mjbZB-lFY8hyTQeM4Gy1mlHHnXoNPU",
+          "mode": "list",
+          "cachedResultName": "Comparing SimilarWeb"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id",
+          "cachedResultName": "Клиенты"
+        },
+        "options": {}
+      },
+      "id": "mc-clients-0001-0001-0001-0001",
+      "name": "Читаем Клиенты для MC",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        688,
+        1728
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Маршрутизация Marketing Channels в таблицу клиента\nconst clients = $('Читаем Клиенты для MC').all();\nconst mcRows = $('Split Out: Marketing Channels').all();\n\nconst clientMap = new Map();\nclients.forEach(c => {\n  if (c.json.client_site && c.json.spreadsheet_id) {\n    clientMap.set(c.json.client_site, c.json.spreadsheet_id);\n  }\n});\n\nconst output = [];\nmcRows.forEach(row => {\n  const clientSite = row.json.client_site;\n  const spreadsheetId = clientMap.get(clientSite);\n  if (spreadsheetId) {\n    output.push({ json: { ...row.json, _spreadsheet_id: spreadsheetId } });\n  }\n});\n\nreturn output.length > 0 ? output : [{ json: { noClientData: true } }];"
+      },
+      "id": "mc-routing-0001-0001-0001-0001",
+      "name": "Маршрутизация MC по клиентам",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        1728
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-mc-client-data",
+              "leftValue": "={{ $json.noClientData }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "mc-filter-0001-0001-0001-0001",
+      "name": "Есть MC данные клиента?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        1728
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json._spreadsheet_id }}/values/Данные!A:T",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "id": "mc-read-0001-0001-0001-0001",
+      "name": "Читаем таблицу для MC upsert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        1728
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Upsert логика Marketing Channels\nconst inputData = $('Есть MC данные клиента?').all();\nconst sheetResponse = $input.first().json;\nconst sheetValues = sheetResponse.values || [];\nconst spreadsheetId = inputData[0]?.json._spreadsheet_id;\n\nconst existingRows = new Map();\nfor (let i = 1; i < sheetValues.length; i++) {\n  const row = sheetValues[i];\n  const period = row[1] || '';\n  const site = row[3] || '';\n  const key = `${period}_${site}`;\n  existingRows.set(key, { rowIndex: i + 1, rowData: row });\n}\n\nconst results = [];\nfor (const item of inputData) {\n  const row = item.json;\n  const key = `${row.period}_${row.site}`;\n  const existing = existingRows.get(key);\n  \n  const newRowData = [\n    row.date || '', row.period || '', row.client_site || '', row.site || '', row.type || '',\n    row['Monthly Visits'] || '', row['Unique Visitors'] || '', row['Visit Duration'] || '',\n    row['Pages/Visit'] || '', row['Bounce Rate'] || '', row.Direct || '',\n    row['Organic Search'] || '', row['Paid Search'] || '', row['Display Ads'] || '',\n    row.Social || '', row.Email || '', row['AI Traffic'] || '',\n    row['Task ID'] || '', row['Queue ID'] || '', row.key || ''\n  ];\n  \n  if (existing) {\n    const mergedData = newRowData.map((newVal, idx) => {\n      if (newVal === '' && existing.rowData[idx]) return existing.rowData[idx];\n      return newVal;\n    });\n    results.push({ json: { action: 'update', spreadsheetId, rowIndex: existing.rowIndex, range: `Данные!A${existing.rowIndex}:T${existing.rowIndex}`, values: [mergedData] } });\n  } else {\n    results.push({ json: { action: 'append', spreadsheetId, values: [newRowData] } });\n  }\n}\n\nreturn results;\n"
+      },
+      "id": "mc-upsert-0001-0001-0001-0001",
+      "name": "Upsert логика MC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        1728
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-mc-update",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "update",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "mc-if-0001-0001-0001-0001",
+      "name": "MC Update или Append?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1808,
+        1728
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}/values/{{ $json.range }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "options": {}
+      },
+      "id": "mc-update-0001-0001-0001-0001",
+      "name": "MC Update строку",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2032,
+        1628
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}/values/Данные!A:T:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "options": {}
+      },
+      "id": "mc-append-0001-0001-0001-0001",
+      "name": "MC Append строку",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2032,
+        1828
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMp9ISVYVcdpImYl",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Формируем отчёт из Marketing Channels данных\nconst data = $('Parse Marketing Channels Data').first().json;\n\nlet report = '🚦 <b>Marketing Channels</b>\\n';\nreport += `📅 ${data.periodFormatted}\\n`;\nreport += `👤 Клиент: ${data.clientSite}\\n\\n`;\n\nconst channels = data.channels;\nconst channelConfig = [\n  { key: 'direct', name: 'Direct', emoji: '🔗' },\n  { key: 'organicSearch', name: 'Organic Search', emoji: '🔍' },\n  { key: 'paidSearch', name: 'Paid Search', emoji: '💰' },\n  { key: 'displayAds', name: 'Display Ads', emoji: '📺' },\n  { key: 'social', name: 'Social', emoji: '📱' },\n  { key: 'email', name: 'Email', emoji: '📧' }\n];\n\nchannelConfig.forEach(({ key, name, emoji }) => {\n  const channelData = channels[key];\n  if (channelData && Object.keys(channelData).length > 0) {\n    report += `${emoji} <b>${name}</b>\\n`;\n    Object.entries(channelData).forEach(([site, value]) => {\n      const siteEmoji = site === data.clientSite ? '🔵' : '🟠';\n      report += `   ${siteEmoji} ${site}: ${value}\\n`;\n    });\n    report += '\\n';\n  }\n});\n\nreport += '━━━━━━━━━━━━━━━━━━━━━\\n';\nreport += '✅ Каналы сохранены';\n\nreturn [{ json: { report, ...data } }];"
+      },
+      "id": "mc-report-0001-0001-0001-0001",
+      "name": "Format MC Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        1904
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "-1003503638426",
+        "text": "={{ $json.report }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "mc-telegram-0001-0001-0001-0001",
+      "name": "Telegram: Marketing Channels",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        1904
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "mHbM43fsaWN90avF",
+          "name": "I.Redin - ws tg log"
+        }
+      }
     },
     {
       "parameters": {
@@ -771,7 +1111,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Парсер Performance данных v3.3\n// Исправлено извлечение периода из разных источников\nconst input = $input.first().json;\n\nconst body = input.body || input;\nconst rawData = body?.task?.capturedTexts || {};\nconst taskId = body?.task?.id || input.taskId || 'unknown';\nconst originUrl = body?.task?.inputParameters?.originUrl || input.originUrl || '';\nconst inputSites = input.sites || [];\n\nconst keyMatch = originUrl.match(/key=([^&]+)/);\nlet sitesFromUrl = [];\nif (keyMatch) {\n  sitesFromUrl = decodeURIComponent(keyMatch[1]).split(',');\n}\nconst clientSite = sitesFromUrl[0] || '';\n\nconst qidMatch = originUrl.match(/qid=([^&]+)/);\nconst queueId = qidMatch ? qidMatch[1] : '';\n\n// Извлекаем период из разных источников\nlet periodFormatted = '';\n// 1. Из URL формата /804/2025.01-2025.02\nconst periodUrlMatch = originUrl.match(/\\/804\\/(\\d{4}\\.\\d{2})-\\d{4}\\.\\d{2}/);\nif (periodUrlMatch) {\n  periodFormatted = periodUrlMatch[1];\n}\n// 2. Из queueId формата site_2025.01_chunk\nif (!periodFormatted && queueId) {\n  const queuePeriodMatch = queueId.match(/_(\\d{4}\\.\\d{2})_/);\n  if (queuePeriodMatch) {\n    periodFormatted = queuePeriodMatch[1];\n  }\n}\n// 3. Текущий месяц как fallback\nif (!periodFormatted) {\n  const now = new Date();\n  periodFormatted = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`;\n}\n\nlet data = {};\nif (Array.isArray(rawData)) {\n  rawData.forEach(item => {\n    const key = item.name || item.key;\n    const value = item.newText || item.text || item.value;\n    if (key && value) data[key] = value;\n  });\n} else {\n  data = rawData;\n}\n\nfunction isLoading(html) {\n  if (!html) return true;\n  return html.includes('LoadingContainer') || html.includes('linearGradient id=\"lineGray\"');\n}\n\nfunction extractLegendData(html) {\n  if (!html) return {};\n  const sites = {};\n  const patterns = [\n    /data-automation-title=\"true\"[^>]*>([^<]+)<\\/label>[\\s\\S]*?data-automation-value=\"true\"[^>]*>([^<]+)<\\/label>/g,\n    /class=\"[^\"]*lfbxrA[^\"]*\">([^<]+)<\\/label>[\\s\\S]{0,300}?class=\"[^\"]*gzsEum[^\"]*\">([^<]+)<\\/label>/g,\n    /class=\"[^\"]*iUaIjL[^\"]*\">([^<]+)<\\/label>[\\s\\S]{0,300}?class=\"[^\"]*gzsEum[^\"]*\">([^<]+)<\\/label>/g\n  ];\n  patterns.forEach(pattern => {\n    let match;\n    while ((match = pattern.exec(html)) !== null) {\n      const site = match[1].trim();\n      const value = match[2].trim();\n      if (site && value && site.includes('.') && /^[a-zA-Z0-9]/.test(site)) {\n        if (!sites[site]) sites[site] = value;\n      }\n    }\n  });\n  return sites;\n}\n\nfunction extractEngagementData(html) {\n  if (!html || isLoading(html)) return null;\n\n  const result = {};\n\n  // Извлекаем домены из DomainWrapper\n  const domainPattern = /DomainWrapper[^>]*>\\s*([a-zA-Z0-9][a-zA-Z0-9.-]*\\.[a-zA-Z]{2,})\\s*<\\/span>/g;\n  const domains = [];\n  let match;\n  while ((match = domainPattern.exec(html)) !== null) {\n    domains.push(match[1].trim());\n  }\n\n  if (domains.length === 0) return null;\n\n  // Для каждого домена извлекаем значения\n  domains.forEach(domain => {\n    // Находим колонку с этим доменом\n    const columnStart = html.indexOf('DomainWrapper');\n    if (columnStart === -1) return;\n\n    // Ищем все ячейки для этого домена по data-automation\n    const cellRegex = new RegExp(\n      'data-automation=\"MiniFlexTable-cell ' + domain.replace(/\\./g, '\\\\.') + '\"[\\\\s\\\\S]*?<span[^>]*class=\"[^\"]*value[^\"]*\"[^>]*>([\\\\s\\\\S]*?)</span>',\n      'g'\n    );\n\n    const values = [];\n    let cellMatch;\n    while ((cellMatch = cellRegex.exec(html)) !== null) {\n      let val = cellMatch[1]\n        .replace(/<svg[\\s\\S]*?<\\/svg>/g, '')\n        .replace(/<div[\\s\\S]*?<\\/div>/g, '')\n        .replace(/<[^>]+>/g, '')\n        .trim();\n      if (val) {\n        values.push(val);\n      }\n    }\n\n    if (values.length >= 5) {\n      result[domain] = {\n        monthlyVisits: values[0] || '',\n        uniqueVisitors: values[1] || '',\n        visitsPerVisitor: values[2] || '',\n        deduplicatedAudience: values[3] || '',\n        visitDuration: values[4] || '',\n        pagesPerVisit: values[5] || '',\n        bounceRate: values[6] || '',\n        pageViews: values[7] || ''\n      };\n    }\n  });\n\n  return Object.keys(result).length > 0 ? result : null;\n}\n\nconst direct = extractLegendData(data['Direct']);\nconst organicSearch = extractLegendData(data['Organic Search']);\nconst paidSearch = extractLegendData(data['Paid Search']);\nconst displayAds = extractLegendData(data['Display Ads'] || data['Display Search']);\nconst social = extractLegendData(data['Social'] || data['Sosial']);\nconst email = extractLegendData(data['Email']);\n\nlet engagement = null;\nif (!isLoading(data['Engagement'])) {\n  engagement = extractEngagementData(data['Engagement']);\n}\nif (!engagement && data['Engagement 2']) {\n  engagement = extractEngagementData(data['Engagement 2']);\n}\n\nconst today = new Date().toISOString().split('T')[0];\n\nconst allSites = new Set();\n[direct, organicSearch, paidSearch, displayAds, social, email].forEach(channel => {\n  Object.keys(channel).forEach(site => allSites.add(site));\n});\nif (engagement) {\n  Object.keys(engagement).forEach(site => allSites.add(site));\n}\nif (allSites.size === 0 && sitesFromUrl.length > 0) {\n  sitesFromUrl.forEach(site => allSites.add(site));\n}\nif (allSites.size === 0 && inputSites.length > 0) {\n  inputSites.forEach(site => allSites.add(site));\n}\n\nconst sitesArray = Array.from(allSites);\n\nconst sheetsRows = sitesArray.map((site) => {\n  const eng = engagement?.[site] || {};\n  return {\n    'date': today,\n    'period': periodFormatted,\n    'client_site': clientSite,\n    'site': site,\n    'type': site === clientSite ? 'client' : 'competitor',\n    'Monthly Visits': eng.monthlyVisits || '',\n    'Unique Visitors': eng.uniqueVisitors || '',\n    'Visit Duration': eng.visitDuration || '',\n    'Pages/Visit': eng.pagesPerVisit || '',\n    'Bounce Rate': eng.bounceRate || '',\n    'Direct': direct[site] || '',\n    'Organic Search': organicSearch[site] || '',\n    'Paid Search': paidSearch[site] || '',\n    'Display Ads': displayAds[site] || '',\n    'Social': social[site] || '',\n    'Email': email[site] || '',\n    'Task ID': taskId,\n    'Queue ID': queueId,\n    'key': `${periodFormatted}_${site}`\n  };\n});\n\nreturn [{\n  json: {\n    taskId,\n    queueId,\n    type: 'performance',\n    periodFormatted,\n    clientSite,\n    engagement,\n    channels: { direct, organicSearch, paidSearch, displayAds, social, email },\n    sheetsRows,\n    sitesCount: sitesArray.length,\n    raw: data\n  }\n}];\n"
+        "jsCode": "// Парсер Performance данных v4.0\n// v4: Только Engagement данные (каналы перенесены в Marketing Channels Robot)\nconst input = $input.first().json;\n\nconst body = input.body || input;\nconst rawData = body?.task?.capturedTexts || {};\nconst taskId = body?.task?.id || input.taskId || 'unknown';\nconst originUrl = body?.task?.inputParameters?.originUrl || input.originUrl || '';\nconst inputSites = input.sites || [];\n\nconst keyMatch = originUrl.match(/key=([^&]+)/);\nlet sitesFromUrl = [];\nif (keyMatch) {\n  sitesFromUrl = decodeURIComponent(keyMatch[1]).split(',');\n}\nconst clientSite = sitesFromUrl[0] || '';\n\nconst qidMatch = originUrl.match(/qid=([^&]+)/);\nconst queueId = qidMatch ? qidMatch[1] : '';\n\n// Извлекаем период из разных источников\nlet periodFormatted = '';\nconst periodUrlMatch = originUrl.match(/\\/804\\/(\\d{4}\\.\\d{2})-\\d{4}\\.\\d{2}/);\nif (periodUrlMatch) {\n  periodFormatted = periodUrlMatch[1];\n}\nif (!periodFormatted && queueId) {\n  const queuePeriodMatch = queueId.match(/_(\\d{4}\\.\\d{2})_/);\n  if (queuePeriodMatch) {\n    periodFormatted = queuePeriodMatch[1];\n  }\n}\nif (!periodFormatted) {\n  const now = new Date();\n  periodFormatted = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`;\n}\n\nlet data = {};\nif (Array.isArray(rawData)) {\n  rawData.forEach(item => {\n    const key = item.name || item.key;\n    const value = item.newText || item.text || item.value;\n    if (key && value) data[key] = value;\n  });\n} else {\n  data = rawData;\n}\n\nfunction isLoading(html) {\n  if (!html) return true;\n  return html.includes('LoadingContainer') || html.includes('linearGradient id=\"lineGray\"');\n}\n\nfunction extractEngagementData(html) {\n  if (!html || isLoading(html)) return null;\n  const result = {};\n  const domainPattern = /DomainWrapper[^>]*>\\s*([a-zA-Z0-9][a-zA-Z0-9.-]*\\.[a-zA-Z]{2,})\\s*<\\/span>/g;\n  const domains = [];\n  let match;\n  while ((match = domainPattern.exec(html)) !== null) {\n    domains.push(match[1].trim());\n  }\n  if (domains.length === 0) return null;\n  domains.forEach(domain => {\n    const cellRegex = new RegExp(\n      'data-automation=\"MiniFlexTable-cell ' + domain.replace(/\\./g, '\\\\.') + '\"[\\\\s\\\\S]*?<span[^>]*class=\"[^\"]*value[^\"]*\"[^>]*>([\\\\s\\\\S]*?)</span>',\n      'g'\n    );\n    const values = [];\n    let cellMatch;\n    while ((cellMatch = cellRegex.exec(html)) !== null) {\n      let val = cellMatch[1].replace(/<svg[\\s\\S]*?<\\/svg>/g, '').replace(/<div[\\s\\S]*?<\\/div>/g, '').replace(/<[^>]+>/g, '').trim();\n      if (val) values.push(val);\n    }\n    if (values.length >= 5) {\n      result[domain] = {\n        monthlyVisits: values[0] || '',\n        uniqueVisitors: values[1] || '',\n        visitsPerVisitor: values[2] || '',\n        deduplicatedAudience: values[3] || '',\n        visitDuration: values[4] || '',\n        pagesPerVisit: values[5] || '',\n        bounceRate: values[6] || '',\n        pageViews: values[7] || ''\n      };\n    }\n  });\n  return Object.keys(result).length > 0 ? result : null;\n}\n\n// Извлекаем Engagement из обоих источников\nlet engagement = null;\nif (!isLoading(data['Engagement'])) {\n  engagement = extractEngagementData(data['Engagement']);\n}\nif (!engagement && data['Engagement 2']) {\n  engagement = extractEngagementData(data['Engagement 2']);\n}\n\nconst today = new Date().toISOString().split('T')[0];\n\n// Собираем сайты только из Engagement\nconst allSites = new Set();\nif (engagement) {\n  Object.keys(engagement).forEach(site => allSites.add(site));\n}\nif (allSites.size === 0 && sitesFromUrl.length > 0) {\n  sitesFromUrl.forEach(site => allSites.add(site));\n}\nif (allSites.size === 0 && inputSites.length > 0) {\n  inputSites.forEach(site => allSites.add(site));\n}\n\nconst sitesArray = Array.from(allSites);\n\n// v4: Только Engagement метрики (каналы пустые - заполнятся из Marketing Channels)\nconst sheetsRows = sitesArray.map((site) => {\n  const eng = engagement?.[site] || {};\n  return {\n    'date': today,\n    'period': periodFormatted,\n    'client_site': clientSite,\n    'site': site,\n    'type': site === clientSite ? 'client' : 'competitor',\n    'Monthly Visits': eng.monthlyVisits || '',\n    'Unique Visitors': eng.uniqueVisitors || '',\n    'Visit Duration': eng.visitDuration || '',\n    'Pages/Visit': eng.pagesPerVisit || '',\n    'Bounce Rate': eng.bounceRate || '',\n    'Direct': '',\n    'Organic Search': '',\n    'Paid Search': '',\n    'Display Ads': '',\n    'Social': '',\n    'Email': '',\n    'Task ID': taskId,\n    'Queue ID': queueId,\n    'key': `${periodFormatted}_${site}`\n  };\n});\n\nreturn [{\n  json: {\n    taskId,\n    queueId,\n    type: 'performance',\n    periodFormatted,\n    clientSite,\n    engagement,\n    sheetsRows,\n    sitesCount: sitesArray.length,\n    raw: data\n  }\n}];\n"
       },
       "id": "c2ce219d-507c-4ff5-8b2f-c258da680ca1",
       "name": "Parse Performance Data",
@@ -888,7 +1228,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Формируем отчёт из Performance данных\nconst data = $('Parse Performance Data').first().json;\n\nlet report = '📊 <b>SimilarWeb Report</b>\\n';\nreport += `📅 ${data.periodFormatted}\\n`;\nreport += `👤 Клиент: ${data.clientSite}\\n\\n`;\n\n// Engagement данные\nconst engagement = data.engagement;\nif (engagement && Object.keys(engagement).length > 0) {\n  report += '━━━━━━━━━━━━━━━━━━━━━\\n';\n  report += '📈 <b>ENGAGEMENT</b>\\n';\n  report += '━━━━━━━━━━━━━━━━━━━━━\\n\\n';\n  \n  Object.entries(engagement).forEach(([site, metrics], idx) => {\n    const siteEmoji = site === data.clientSite ? '🔵' : '🟠';\n    report += `${siteEmoji} <b>${site}</b>\\n`;\n    if (metrics.monthlyVisits) report += `   📊 Monthly Visits: ${metrics.monthlyVisits}\\n`;\n    if (metrics.uniqueVisitors) report += `   👥 Unique Visitors: ${metrics.uniqueVisitors}\\n`;\n    if (metrics.visitDuration) report += `   ⏱ Visit Duration: ${metrics.visitDuration}\\n`;\n    if (metrics.pagesPerVisit) report += `   📄 Pages/Visit: ${metrics.pagesPerVisit}\\n`;\n    if (metrics.bounceRate) report += `   📉 Bounce Rate: ${metrics.bounceRate}\\n`;\n    report += '\\n';\n  });\n}\n\n// Каналы трафика\nconst channels = data.channels;\nconst hasChannels = channels && Object.values(channels).some(ch => Object.keys(ch).length > 0);\n\nif (hasChannels) {\n  report += '━━━━━━━━━━━━━━━━━━━━━\\n';\n  report += '🚦 <b>TRAFFIC SOURCES</b>\\n';\n  report += '━━━━━━━━━━━━━━━━━━━━━\\n\\n';\n  \n  const channelConfig = [\n    { key: 'direct', name: 'Direct', emoji: '🔗' },\n    { key: 'organicSearch', name: 'Organic Search', emoji: '🔍' },\n    { key: 'paidSearch', name: 'Paid Search', emoji: '💰' },\n    { key: 'displayAds', name: 'Display Ads', emoji: '📺' },\n    { key: 'social', name: 'Social', emoji: '📱' },\n    { key: 'email', name: 'Email', emoji: '📧' }\n  ];\n  \n  channelConfig.forEach(({ key, name, emoji }) => {\n    const channelData = channels[key];\n    if (channelData && Object.keys(channelData).length > 0) {\n      report += `${emoji} <b>${name}</b>\\n`;\n      Object.entries(channelData).forEach(([site, value], idx) => {\n        const siteEmoji = site === data.clientSite ? '🔵' : '🟠';\n        report += `   ${siteEmoji} ${site}: ${value}\\n`;\n      });\n      report += '\\n';\n    }\n  });\n}\n\nreport += '━━━━━━━━━━━━━━━━━━━━━\\n';\nreport += '✅ Данные сохранены';\n\nreturn [{\n  json: {\n    report,\n    ...data\n  }\n}];"
+        "jsCode": "// Формируем отчёт из Performance данных v4.0\n// v4: Только Engagement (каналы в отдельном роботе)\nconst data = $('Parse Performance Data').first().json;\n\nlet report = '📊 <b>SimilarWeb Engagement</b>\\n';\nreport += `📅 ${data.periodFormatted}\\n`;\nreport += `👤 Клиент: ${data.clientSite}\\n\\n`;\n\nconst engagement = data.engagement;\nif (engagement && Object.keys(engagement).length > 0) {\n  report += '━━━━━━━━━━━━━━━━━━━━━\\n';\n  report += '📈 <b>ENGAGEMENT</b>\\n';\n  report += '━━━━━━━━━━━━━━━━━━━━━\\n\\n';\n  \n  Object.entries(engagement).forEach(([site, metrics], idx) => {\n    const siteEmoji = site === data.clientSite ? '🔵' : '🟠';\n    report += `${siteEmoji} <b>${site}</b>\\n`;\n    if (metrics.monthlyVisits) report += `   📊 Monthly Visits: ${metrics.monthlyVisits}\\n`;\n    if (metrics.uniqueVisitors) report += `   👥 Unique Visitors: ${metrics.uniqueVisitors}\\n`;\n    if (metrics.visitDuration) report += `   ⏱ Visit Duration: ${metrics.visitDuration}\\n`;\n    if (metrics.pagesPerVisit) report += `   📄 Pages/Visit: ${metrics.pagesPerVisit}\\n`;\n    if (metrics.bounceRate) report += `   📉 Bounce Rate: ${metrics.bounceRate}\\n`;\n    report += '\\n';\n  });\n} else {\n  report += '⚠️ Нет данных Engagement\\n';\n}\n\nreport += '━━━━━━━━━━━━━━━━━━━━━\\n';\nreport += '✅ Engagement сохранён';\n\nreturn [{\n  json: {\n    report,\n    ...data\n  }\n}];"
       },
       "id": "4a021a4f-7cab-4c2a-b95c-825217df8e53",
       "name": "Format Performance Report",
@@ -1933,6 +2273,28 @@
       "main": [
         [
           {
+            "node": "Запуск Marketing Channels Robot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Запуск Marketing Channels Robot": {
+      "main": [
+        [
+          {
+            "node": "Ждём Marketing Channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ждём Marketing Channels": {
+      "main": [
+        [
+          {
             "node": "Запуск AI Traffic Robot",
             "type": "main",
             "index": 0
@@ -2345,6 +2707,128 @@
         [
           {
             "node": "AI Append строку",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Marketing Channels Results": {
+      "main": [
+        [
+          {
+            "node": "Parse Marketing Channels Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Marketing Channels Data": {
+      "main": [
+        [
+          {
+            "node": "Split Out: Marketing Channels",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format MC Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out: Marketing Channels": {
+      "main": [
+        [
+          {
+            "node": "Читаем Клиенты для MC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем Клиенты для MC": {
+      "main": [
+        [
+          {
+            "node": "Маршрутизация MC по клиентам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Маршрутизация MC по клиентам": {
+      "main": [
+        [
+          {
+            "node": "Есть MC данные клиента?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Есть MC данные клиента?": {
+      "main": [
+        [
+          {
+            "node": "Читаем таблицу для MC upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем таблицу для MC upsert": {
+      "main": [
+        [
+          {
+            "node": "Upsert логика MC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert логика MC": {
+      "main": [
+        [
+          {
+            "node": "MC Update или Append?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MC Update или Append?": {
+      "main": [
+        [
+          {
+            "node": "MC Update строку",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MC Append строку",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format MC Report": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Marketing Channels",
             "type": "main",
             "index": 0
           }
